@@ -146,7 +146,7 @@ class Room extends Model {
 
 Room.init({
   id: {
-    type: DataTypes.INTEGER.UNSIGNED,
+    type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
     comment: '房间ID，主键'
@@ -169,7 +169,7 @@ Room.init({
     comment: '房间描述'
   },
   ownerId: {
-    type: DataTypes.INTEGER.UNSIGNED,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'users',
@@ -191,7 +191,7 @@ Room.init({
     comment: '邀请码，公开房间使用'
   },
   maxMembers: {
-    type: DataTypes.INTEGER.UNSIGNED,
+    type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 100,
     validate: {

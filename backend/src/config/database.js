@@ -27,7 +27,7 @@ if (DB_DIALECT === 'postgres') {
       pool: {
         max: 5,
         min: 0,
-        acquire: 30000,
+        acquire: 60000,
         idle: 10000
       },
       define: {

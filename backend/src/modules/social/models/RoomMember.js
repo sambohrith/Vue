@@ -167,13 +167,13 @@ class RoomMember extends Model {
 
 RoomMember.init({
   id: {
-    type: DataTypes.INTEGER.UNSIGNED,
+    type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
     comment: '成员记录ID，主键'
   },
   roomId: {
-    type: DataTypes.INTEGER.UNSIGNED,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'rooms',
@@ -183,7 +183,7 @@ RoomMember.init({
     comment: '房间ID'
   },
   userId: {
-    type: DataTypes.INTEGER.UNSIGNED,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'users',

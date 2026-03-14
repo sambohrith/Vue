@@ -54,7 +54,15 @@ class User extends Model {
   }
 
   /**
-   * 获取完整资料（用于个人资料页面）
+   * 获取完整信息（用于管理员）
+   * @returns {Object}
+   */
+  toAdminJSON() {
+    return this.toJSON();
+  }
+
+  /**
+   * 获取个人信息（用于个人资料页面）
    * @returns {Object}
    */
   toProfileJSON() {
@@ -66,28 +74,19 @@ class User extends Model {
       isActive: this.isActive,
       fullName: this.fullName,
       gender: this.gender,
-      dateOfBirth: this.dateOfBirth,
       phone: this.phone,
-      idCard: this.idCard,
-      employeeId: this.employeeId,
       department: this.department,
       position: this.position,
-      hireDate: this.hireDate,
-      workLocation: this.workLocation,
+      employeeId: this.employeeId,
       highestDegree: this.highestDegree,
       school: this.school,
       major: this.major,
-      graduationYear: this.graduationYear,
       province: this.province,
       city: this.city,
-      district: this.district,
       addressDetail: this.addressDetail,
-      zipCode: this.zipCode,
       avatar: this.avatar,
       bio: this.bio,
       skills: this.skills,
-      hobbies: this.hobbies,
-      remarks: this.remarks,
       lastLoginAt: this.lastLoginAt,
       createdAt: this.createdAt
     };
@@ -117,53 +116,25 @@ class User extends Model {
     const { limit = 20, offset = 0 } = options;
     const searchTerm = `%${query}%`;
     
-    return await this.findAll({
+    return await this.findAndCountAll({
       where: {
         isActive: true,
         [Op.or]: [
           { username: { [Op.like]: searchTerm } },
-          { email: { [Op.like]: searchTerm } },
           { fullName: { [Op.like]: searchTerm } },
-          { employeeId: { [Op.like]: searchTerm } },
-        ],
+          { email: { [Op.like]: searchTerm } },
+          { department: { [Op.like]: searchTerm } }
+        ]
       },
       attributes: { exclude: ['password', 'passwordChangedAt'] },
+      order: [['createdAt', 'DESC']],
       limit,
-      offset,
-      order: [['createdAt', 'DESC']]
+      offset
     });
   }
 
   /**
-   * 根据ID查找用户（缓存友好）
-   * @param {number} id - 用户ID
-   * @returns {Promise<User|null>}
-   */
-  static async findById(id) {
-    return await this.findByPk(id, {
-      attributes: { exclude: ['password', 'passwordChangedAt'] }
-    });
-  }
-
-  /**
-   * 获取在线用户列表
-   * @returns {Promise<User[]>}
-   */
-  static async findOnline() {
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-    return await this.findAll({
-      where: {
-        isActive: true,
-        lastLoginAt: {
-          [Op.gt]: thirtyMinutesAgo
-        }
-      },
-      attributes: ['id', 'username', 'fullName', 'avatar', 'lastLoginAt']
-    });
-  }
-
-  /**
-   * 获取用户统计数据
+   * 获取统计数据
    * @returns {Promise<Object>}
    */
   static async getStats() {
@@ -173,9 +144,8 @@ class User extends Model {
       this.count({ where: { isActive: true } }),
       this.count({
         where: {
-          isActive: true,
           lastLoginAt: {
-            [Op.gt]: new Date(Date.now() - 30 * 60 * 1000)
+            [Op.gte]: new Date(Date.now() - 30 * 60 * 1000)
           }
         }
       })
@@ -229,11 +199,11 @@ User.init({
   fullName: {
     type: DataTypes.STRING(50),
     allowNull: true,
+    validate: { len: [0, 50] },
   },
   gender: {
     type: DataTypes.STRING(10),
     allowNull: true,
-    defaultValue: '',
     validate: {
       isIn: [['male', 'female', 'other', '']],
     },
@@ -243,7 +213,7 @@ User.init({
     allowNull: true,
   },
   
-  // ==================== 工作信息（核心字段） ====================
+  // ==================== 工作信息 ====================
   department: {
     type: DataTypes.STRING(50),
     allowNull: true,
@@ -257,11 +227,10 @@ User.init({
     allowNull: true,
   },
   
-  // ==================== 教育信息（核心字段） ====================
+  // ==================== 教育信息 ====================
   highestDegree: {
     type: DataTypes.STRING(20),
     allowNull: true,
-    defaultValue: '',
     validate: {
       isIn: [['high_school', 'associate', 'bachelor', 'master', 'doctorate', 'other', '']],
     },
@@ -275,7 +244,7 @@ User.init({
     allowNull: true,
   },
   
-  // ==================== 地址信息（简化） ====================
+  // ==================== 地址信息 ====================
   province: {
     type: DataTypes.STRING(50),
     allowNull: true,
@@ -293,21 +262,17 @@ User.init({
   avatar: {
     type: DataTypes.STRING(500),
     allowNull: true,
+    validate: { isUrl: true },
   },
   bio: {
     type: DataTypes.STRING(500),
     allowNull: true,
+    validate: { len: [0, 500] },
   },
   skills: {
     type: DataTypes.TEXT,
     allowNull: true,
-    get() {
-      const val = this.getDataValue('skills');
-      return val ? val.split(',').filter(Boolean) : [];
-    },
-    set(value) {
-      this.setDataValue('skills', Array.isArray(value) ? value.join(',') : value);
-    },
+    comment: '技能标签，逗号分隔',
   },
   
   // ==================== 账户元数据 ====================
@@ -357,21 +322,10 @@ User.init({
     beforeSave: async (user) => {
       if (user.changed('password')) {
         user.password = md5Hash(user.password);
-        if (!user.isNewRecord) {
-          user.passwordChangedAt = new Date();
-        }
+        user.passwordChangedAt = new Date();
       }
     },
-    beforeValidate: (user) => {
-      if (user.username) user.username = user.username.trim().toLowerCase();
-      if (user.email) user.email = user.email.trim().toLowerCase();
-    },
   },
-  scopes: {
-    withPassword: {
-      attributes: { include: ['password'] }
-    }
-  }
 });
 
 module.exports = User;
