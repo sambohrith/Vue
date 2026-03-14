@@ -24,6 +24,41 @@ const routes = require('./routes');
 const ChatMessage = require('./modules/chat/models/ChatMessage');
 const User = require('./modules/user/models/User');
 
+// 创建默认管理员账号
+async function createDefaultAdmin() {
+  try {
+    const adminUsername = process.env.ADMIN_DEFAULT_USERNAME || 'admin';
+    const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
+    const adminEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@example.com';
+    
+    // 检查是否已存在管理员
+    const existingAdmin = await User.findOne({
+      where: { username: adminUsername }
+    });
+    
+    if (existingAdmin) {
+      console.log('✅ 管理员账号已存在');
+      return;
+    }
+    
+    // 创建管理员账号
+    await User.create({
+      username: adminUsername,
+      email: adminEmail,
+      password: adminPassword,
+      role: 'admin',
+      isActive: true,
+      fullName: '系统管理员'
+    });
+    
+    console.log('✅ 默认管理员账号创建成功');
+    console.log(`   用户名: ${adminUsername}`);
+    console.log(`   密码: ${adminPassword}`);
+  } catch (error) {
+    console.error('❌ 创建默认管理员账号失败:', error.message);
+  }
+}
+
 // 自动修复聊天消息数据
 async function autoFixChatMessages() {
   try {
@@ -244,6 +279,9 @@ const startServer = async () => {
     
     // 自动修复无效的消息数据
     await autoFixChatMessages();
+    
+    // 创建默认管理员账号
+    await createDefaultAdmin();
     
     const PORT = env.port;
     const HOST = env.isLocalServer ? '0.0.0.0' : env.localIP;

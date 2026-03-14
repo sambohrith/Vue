@@ -318,6 +318,14 @@ User.init({
     { fields: ['department'] },
     { fields: ['createdAt'] },
   ],
+  defaultScope: {
+    attributes: { exclude: ['password', 'passwordChangedAt'] }
+  },
+  scopes: {
+    withPassword: {
+      attributes: { include: ['password', 'passwordChangedAt'] }
+    }
+  },
   hooks: {
     beforeSave: async (user) => {
       if (user.changed('password')) {
