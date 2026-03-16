@@ -2,105 +2,115 @@
 chcp 65001 >nul
 title IMS 开发服务器
 
-:: 信息管理系统开发服务器启动脚本
+:: 信息管理系统开发服务器启动脚本 (Batch)
+:: 同时启动前端(Vue3)和后端(Go)服务
 
-echo ========================================
-echo    信息管理系统 (IMS) - 开发服务器
-echo ========================================
-echo.
+set "FRONTEND_DIR=frontend-vue3-vite"
+set "BACKEND_DIR=backend-go"
 
 :: 解析参数
-set "RUN_FRONTEND=1"
-set "RUN_BACKEND=1"
+set "SKIP_BACKEND="
+set "SKIP_FRONTEND="
+set "SHOW_HELP="
 
-if "%~1"=="-h" goto :help
-if "%~1"=="--help" goto :help
-if "%~1"=="/help" goto :help
+:parse_args
+if "%~1"=="" goto :check_args
+if /i "%~1"=="-b" set "SKIP_FRONTEND=1"
+if /i "%~1"=="--backend-only" set "SKIP_FRONTEND=1"
+if /i "%~1"=="-f" set "SKIP_BACKEND=1"
+if /i "%~1"=="--frontend-only" set "SKIP_FRONTEND=1"
+if /i "%~1"=="-h" set "SHOW_HELP=1"
+if /i "%~1"=="--help" set "SHOW_HELP=1"
+shift
+goto :parse_args
 
-if "%~1"=="--frontend-only" (
-    set "RUN_BACKEND=0"
-    goto :start
-)
-if "%~1"=="--backend-only" (
-    set "RUN_FRONTEND=0"
-    goto :start
-)
-if "%~1"=="-f" (
-    set "RUN_BACKEND=0"
-    goto :start
-)
-if "%~1"=="-b" (
-    set "RUN_FRONTEND=0"
-    goto :start
-)
-
-:start
-:: 检查依赖
-if "%RUN_FRONTEND%"=="1" (
-    if not exist "frontend\node_modules" (
-        echo ⚠️  前端依赖未安装，正在安装...
-        cd frontend
-        call npm install
-        if errorlevel 1 (
-            echo ❌ 前端依赖安装失败
-            exit /b 1
-        )
-        cd ..
-    )
+:check_args
+if defined SHOW_HELP (
+    echo 使用方法:
+    echo   start-dev.bat                启动前后端服务
+    echo   start-dev.bat -f             仅启动前端
+    echo   start-dev.bat -b             仅启动后端
+    echo   start-dev.bat -h             显示帮助
+    echo.
+    echo 服务地址:
+    echo   前端: http://localhost:3000
+    echo   后端: http://localhost:3001
+    echo.
+    echo 技术栈:
+    echo   前端: Vue3 + Vite
+    echo   后端: Go + Gin
+    exit /b 0
 )
 
-if "%RUN_BACKEND%"=="1" (
-    if not exist "backend\node_modules" (
-        echo ⚠️  后端依赖未安装，正在安装...
-        cd backend
-        call npm install
-        if errorlevel 1 (
-            echo ❌ 后端依赖安装失败
-            exit /b 1
-        )
-        cd ..
-    )
-)
-
-:: 启动服务
 echo.
-if "%RUN_FRONTEND%"=="1" (
-    echo 🚀 正在启动前端服务...
-    start "IMS Frontend" cmd /k "cd frontend && echo [FRONTEND] 启动中... && npm run dev"
+echo ========================================
+echo    信息管理系统 (IMS) - 开发服务器
+echo    前端: Vue3 + Vite
+echo    后端: Go + Ginecho ========================================
+echo.
+
+:: 启动前端
+if not defined SKIP_FRONTEND (
+    echo [启动] 前端服务 (Vue3)...
+    
+    if not exist "%FRONTEND_DIR%\node_modules" (
+        echo [安装] 前端依赖...
+        cd %FRONTEND_DIR%
+        call npm install
+        cd ..
+    )
+    
+    start "Frontend - Vue3" cmd /k "cd %FRONTEND_DIR% && npm run dev"
     timeout /t 2 /nobreak >nul
 )
 
-if "%RUN_BACKEND%"=="1" (
-    echo 🚀 正在启动后端服务...
-    start "IMS Backend" cmd /k "cd backend && echo [BACKEND] 启动中... && npm run dev"
+:: 启动后端
+if not defined SKIP_BACKEND (
+    echo [启动] 后端服务 (Go)...
+    
+    :: 检查 Go 环境
+    go version >nul 2>&1
+    if errorlevel 1 (
+        echo [错误] 未检测到 Go 环境，请先安装 Go 1.21+
+        exit /b 1
+    )
+    
+    :: 检查 go.mod
+    if not exist "%BACKEND_DIR%\go.mod" (
+        echo [错误] 后端 go.mod 不存在，请确保 %BACKEND_DIR% 目录存在
+        exit /b 1
+    )
+    
+    echo [检查] Go 依赖...
+    cd %BACKEND_DIR%
+    go mod download >nul 2>&1
+    cd ..
+    
+    start "Backend - Go" cmd /k "cd %BACKEND_DIR% && go run cmd/main.go"
     timeout /t 2 /nobreak >nul
 )
 
 echo.
 echo ========================================
-echo ✅ 开发服务器已启动!
+echo [OK] 开发服务器已启动!
 echo.
-echo 📱 前端地址: http://localhost:3000
-echo 🖥️  后端地址: http://localhost:3001
+echo 前端地址: http://localhost:3000
+echo 后端地址: http://localhost:3001
+echo.
+echo 默认管理员账号:
+echo   用户名: admin
+echo   密码: admin123
+echo.
+echo 按任意键停止所有服务...
 echo ========================================
 echo.
-echo 提示: 关闭此窗口不会影响已启动的服务
-echo       单独关闭前端或后端请关闭对应窗口
-echo.
-pause
-goto :eof
 
-:help
-echo 使用方法:
-echo   start-dev.bat         启动前后端服务
-echo   start-dev.bat -f      仅启动前端
-echo   start-dev.bat -b      仅启动后端
-echo   start-dev.bat --frontend-only   仅启动前端
-echo   start-dev.bat --backend-only    仅启动后端
-echo   start-dev.bat -h      显示帮助
-echo.
-echo 服务地址:
-echo   前端: http://localhost:3000
-echo   后端: http://localhost:3001
-echo.
-pause
+pause >nul
+
+:: 停止服务
+echo [停止] 正在关闭服务...
+taskkill /FI "WINDOWTITLE eq Frontend - Vue3*" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq Backend - Go*" /F >nul 2>&1
+
+echo [OK] 所有服务已停止
+timeout /t 1 /nobreak >nul

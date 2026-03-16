@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * 信息管理系统开发服务器启动脚本
- * 同时启动前端和后端服务
+ * 同时启动前端(Vue3)和后端(Go)服务
  */
 
 import { spawn } from 'child_process';
@@ -111,30 +111,48 @@ async function main() {
   log(`
 ========================================
    信息管理系统 (IMS) - 开发服务器
+   前端: Vue3 + Vite
+   后端: Go + Gin
 ========================================
 `, 'blue');
 
-  if (!skipFrontend && !fs.existsSync('frontend/node_modules')) {
+  // 前端依赖检查
+  if (!skipFrontend && !fs.existsSync('frontend-vue3-vite/node_modules')) {
     log('⚠️  前端依赖未安装，正在安装...', 'yellow');
-    const install = spawn('npm', ['install'], { cwd: 'frontend', stdio: 'inherit' });
+    const install = spawn('npm', ['install'], { cwd: 'frontend-vue3-vite', stdio: 'inherit' });
     await new Promise((resolve) => install.on('close', resolve));
   }
 
-  if (!skipBackend && !fs.existsSync('backend/node_modules')) {
-    log('⚠️  后端依赖未安装，正在安装...', 'yellow');
-    const install = spawn('npm', ['install'], { cwd: 'backend', stdio: 'inherit' });
-    await new Promise((resolve) => install.on('close', resolve));
+  // Go 依赖检查
+  if (!skipBackend) {
+    const goModPath = path.join(__dirname, 'backend-go', 'go.mod');
+    if (!fs.existsSync(goModPath)) {
+      log('❌ 后端 go.mod 不存在，请确保 backend-go 目录存在', 'red');
+      process.exit(1);
+    }
+    
+    // 检查是否需要下载依赖
+    const vendorPath = path.join(__dirname, 'backend-go', 'vendor');
+    if (!fs.existsSync(vendorPath)) {
+      log('📦 正在检查 Go 依赖...', 'yellow');
+      const download = spawn('go', ['mod', 'download'], { 
+        cwd: 'backend-go', 
+        stdio: 'inherit',
+        shell: true 
+      });
+      await new Promise((resolve) => download.on('close', resolve));
+    }
   }
 
   if (!skipFrontend) {
     log('🚀 正在启动前端服务...', 'cyan');
-    processes.push(createService('frontend', 'frontend', 'npm run dev', 'cyan'));
+    processes.push(createService('frontend', 'frontend-vue3-vite', 'npm run dev', 'cyan'));
     await new Promise(r => setTimeout(r, 2000));
   }
 
   if (!skipBackend) {
-    log('🚀 正在启动后端服务...', 'green');
-    processes.push(createService('backend', 'backend', 'npm run dev', 'green'));
+    log('🚀 正在启动后端服务 (Go)...', 'green');
+    processes.push(createService('backend', 'backend-go', 'go run cmd/main.go', 'green'));
     await new Promise(r => setTimeout(r, 2000));
   }
 
@@ -144,6 +162,10 @@ async function main() {
 
 📱 前端地址: http://localhost:3000
 🖥️  后端地址: http://localhost:3001
+
+默认管理员账号:
+  用户名: admin
+  密码: admin123
 
 按 Ctrl+C 停止所有服务
 ========================================
