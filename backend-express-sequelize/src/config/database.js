@@ -1,84 +1,86 @@
 const { Sequelize } = require('sequelize');
 
-// 数据库类型: mysql | postgres | sqlite
 const DB_DIALECT = process.env.DB_DIALECT || 'mysql';
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-let sequelize;
+const isDevelopment = NODE_ENV === 'development';
+const isProduction = NODE_ENV === 'production';
 
-// 根据数据库类型创建连接
-if (DB_DIALECT === 'postgres') {
-  // PostgreSQL 连接配置
-  sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
+const getDatabaseConfig = () => {
+  const baseConfig = {
+    logging: isDevelopment ? console.log : false,
+    pool: {
+      max: parseInt(process.env.DB_POOL_MAX) || 10,
+      min: parseInt(process.env.DB_POOL_MIN) || 0,
+      acquire: parseInt(process.env.DB_POOL_ACQUIRE) || 30000,
+      idle: parseInt(process.env.DB_POOL_IDLE) || 10000,
+      evict: 1000
+    },
+    retry: {
+      max: 3,
+      match: [
+        /SequelizeConnectionError/,
+        /SequelizeConnectionRefusedError/,
+        /SequelizeHostNotFoundError/,
+        /SequelizeHostNotReachableError/,
+        /SequelizeInvalidConnectionError/,
+        /SequelizeConnectionTimedOutError/
+      ]
+    },
+    define: {
+      timestamps: true,
+      underscored: true,
+      freezeTableName: true,
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt'
+    }
+  };
+
+  if (DB_DIALECT === 'postgres') {
+    return {
+      ...baseConfig,
       dialect: 'postgres',
-      host: process.env.DB_HOST,
+      host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT) || 5432,
-      logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      database: process.env.DB_NAME,
+      username: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
       dialectOptions: {
-        // PostgreSQL 特定选项
         ssl: process.env.DB_SSL === 'true' ? {
           require: true,
           rejectUnauthorized: false
         } : false
-      },
-      pool: {
-        max: 5,
-        min: 0,
-        acquire: 60000,
-        idle: 10000
-      },
-      define: {
-        // PostgreSQL 使用小写表名
-        freezeTableName: true,
-        underscored: true
       }
-    }
-  );
-} else if (DB_DIALECT === 'sqlite') {
-  // SQLite 连接配置
-  sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: process.env.DB_STORAGE || 'database.sqlite',
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    define: {
-      freezeTableName: true,
-      underscored: true
-    }
-  });
-} else {
-  // MySQL 连接配置（默认）
-  sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-      dialect: 'mysql',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT) || 3306,
-      logging: process.env.NODE_ENV === 'development' ? console.log : false,
-      dialectOptions: {
-        charset: 'utf8mb4',
-      },
-      pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-      },
-      define: {
-        charset: 'utf8mb4',
-        collate: 'utf8mb4_unicode_ci'
-      }
-    }
-  );
-}
+    };
+  }
 
-// 定义模型关联关系
+  if (DB_DIALECT === 'sqlite') {
+    return {
+      ...baseConfig,
+      dialect: 'sqlite',
+      storage: process.env.DB_STORAGE || 'database.sqlite'
+    };
+  }
+
+  return {
+    ...baseConfig,
+    dialect: 'mysql',
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 3306,
+    database: process.env.DB_NAME,
+    username: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    dialectOptions: {
+      charset: 'utf8mb4',
+      supportBigNumbers: true,
+      bigNumberStrings: true
+    }
+  };
+};
+
+const sequelize = new Sequelize(getDatabaseConfig());
+
 const setupAssociations = () => {
-  // 动态导入模型（避免循环依赖）
   const User = require('../modules/user/models/User');
   const Post = require('../modules/social/models/Post');
   const PostLike = require('../modules/social/models/PostLike');
@@ -88,78 +90,87 @@ const setupAssociations = () => {
   const RoomMessage = require('../modules/social/models/RoomMessage');
   const ChatMessage = require('../modules/chat/models/ChatMessage');
 
-  // User - Post 关联（说说）
   User.hasMany(Post, { foreignKey: 'userId', as: 'posts' });
   Post.belongsTo(User, { foreignKey: 'userId', as: 'author' });
 
-  // Post - PostLike 关联
   Post.hasMany(PostLike, { foreignKey: 'postId', as: 'likes' });
   PostLike.belongsTo(Post, { foreignKey: 'postId' });
   PostLike.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-  // Post - PostComment 关联
   Post.hasMany(PostComment, { foreignKey: 'postId', as: 'comments' });
   PostComment.belongsTo(Post, { foreignKey: 'postId' });
   PostComment.belongsTo(User, { foreignKey: 'userId', as: 'author' });
 
-  // 评论的回复关联（二级评论）
   PostComment.hasMany(PostComment, { foreignKey: 'parentId', as: 'replies' });
   PostComment.belongsTo(PostComment, { foreignKey: 'parentId', as: 'parent' });
 
-  // Room 关联
   User.hasMany(Room, { foreignKey: 'ownerId', as: 'ownedRooms' });
   Room.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
 
-  // RoomMember 关联
   Room.hasMany(RoomMember, { foreignKey: 'roomId', as: 'members' });
   RoomMember.belongsTo(Room, { foreignKey: 'roomId', as: 'room' });
   User.hasMany(RoomMember, { foreignKey: 'userId', as: 'roomMemberships' });
   RoomMember.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-  // RoomMessage 关联
   Room.hasMany(RoomMessage, { foreignKey: 'roomId', as: 'messages' });
   RoomMessage.belongsTo(Room, { foreignKey: 'roomId' });
   User.hasMany(RoomMessage, { foreignKey: 'senderId', as: 'roomMessages' });
   RoomMessage.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
 
-  // ChatMessage 关联
   User.hasMany(ChatMessage, { foreignKey: 'senderId', as: 'sentMessages' });
   ChatMessage.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
   User.hasMany(ChatMessage, { foreignKey: 'receiverId', as: 'receivedMessages' });
   ChatMessage.belongsTo(User, { foreignKey: 'receiverId', as: 'receiver' });
 };
 
-// 测试数据库连接
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log(`${DB_DIALECT.toUpperCase()} database connected successfully`);
+    console.log(`✅ ${DB_DIALECT.toUpperCase()} 数据库连接成功`);
   } catch (error) {
-    console.error(`Error connecting to ${DB_DIALECT} database: ${error.message}`);
-    process.exit(1);
+    console.error(`❌ ${DB_DIALECT.toUpperCase()} 数据库连接失败:`, error.message);
+    if (isProduction) {
+      process.exit(1);
+    }
   }
 };
 
-// 同步数据库模型（创建表结构）
 const syncModels = async () => {
   try {
-    // 设置模型关联关系（这会导入所有模型）
     setupAssociations();
-
-    // 先尝试同步所有模型（只创建不存在的表）
-    await sequelize.sync({ alter: false, force: false });
-    console.log('Database models synced successfully');
+    await sequelize.sync({ alter: isDevelopment, force: false });
+    console.log('✅ 数据库模型同步成功');
   } catch (error) {
-    console.error(`Error syncing database models: ${error.message}`);
-    console.error('错误详情:', error);
-    // 不退出进程，继续启动服务器
-    console.log('警告: 数据库同步出现问题，但服务器将继续启动');
+    console.error('❌ 数据库模型同步失败:', error.message);
+    if (isProduction) {
+      process.exit(1);
+    }
   }
 };
+
+const closeDB = async () => {
+  try {
+    await sequelize.close();
+    console.log('✅ 数据库连接已关闭');
+  } catch (error) {
+    console.error('❌ 关闭数据库连接失败:', error.message);
+  }
+};
+
+process.on('SIGINT', async () => {
+  await closeDB();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await closeDB();
+  process.exit(0);
+});
 
 module.exports = {
   sequelize,
   connectDB,
   syncModels,
+  closeDB,
   DB_DIALECT
 };
