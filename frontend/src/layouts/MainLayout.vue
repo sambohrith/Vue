@@ -87,7 +87,11 @@
 
       <!-- 页面内容 -->
       <div class="content-wrapper">
-        <slot></slot>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
     </main>
   </div>
@@ -423,9 +427,9 @@ onMounted(() => {
 
 .content-wrapper {
   flex: 1;
-  padding: 2rem;
   overflow-y: auto;
   background-color: #f1f5f9;
+  padding: 12px;
 }
 
 /* 滚动条样式 */

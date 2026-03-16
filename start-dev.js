@@ -4,11 +4,15 @@
  * 同时启动前端和后端服务
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
-const readline = require('readline');
+import { spawn } from 'child_process';
+import path from 'path';
+import readline from 'readline';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-// 颜色输出
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -23,7 +27,6 @@ const colors = {
 const log = (msg, color = 'reset') => console.log(`${colors[color]}${msg}${colors.reset}`);
 const timestamp = () => new Date().toLocaleTimeString('zh-CN', { hour12: false });
 
-// 解析参数
 const args = process.argv.slice(2);
 const skipBackend = args.includes('--backend-only') || args.includes('-b');
 const skipFrontend = args.includes('--frontend-only') || args.includes('-f');
@@ -100,12 +103,10 @@ function stopAll() {
   setTimeout(() => process.exit(0), 500);
 }
 
-// 信号处理
 process.on('SIGINT', stopAll);
 process.on('SIGTERM', stopAll);
 process.on('exit', stopAll);
 
-// 主程序
 async function main() {
   log(`
 ========================================
@@ -113,9 +114,6 @@ async function main() {
 ========================================
 `, 'blue');
 
-  // 检查依赖
-  const fs = require('fs');
-  
   if (!skipFrontend && !fs.existsSync('frontend/node_modules')) {
     log('⚠️  前端依赖未安装，正在安装...', 'yellow');
     const install = spawn('npm', ['install'], { cwd: 'frontend', stdio: 'inherit' });
@@ -128,7 +126,6 @@ async function main() {
     await new Promise((resolve) => install.on('close', resolve));
   }
 
-  // 启动服务
   if (!skipFrontend) {
     log('🚀 正在启动前端服务...', 'cyan');
     processes.push(createService('frontend', 'frontend', 'npm run dev', 'cyan'));
@@ -152,7 +149,6 @@ async function main() {
 ========================================
 `, 'green');
 
-  // 保持运行
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout

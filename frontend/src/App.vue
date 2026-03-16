@@ -1,10 +1,6 @@
 <template>
   <div class="app-container" :class="{ 'dark': isDarkMode }">
-    <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view>
+    <router-view />
   </div>
 </template>
 
@@ -49,15 +45,5 @@ defineExpose({
 .app-container.dark {
   background-color: #1a1a1a;
   color: #f0f0f0;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

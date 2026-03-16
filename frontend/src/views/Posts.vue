@@ -1,6 +1,5 @@
 <template>
-  <MainLayout>
-    <div class="posts-page">
+  <div class="posts-page">
       <div class="posts-container">
         <!-- 发布框 -->
         <div class="create-post-card">
@@ -141,12 +140,10 @@
         </div>
       </div>
     </div>
-  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import MainLayout from '@/layouts/MainLayout.vue'
 import { useUserStore } from '@/stores/user'
 import { message } from 'ant-design-vue'
 import { postsApi } from '@/api'

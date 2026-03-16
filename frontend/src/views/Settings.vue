@@ -1,6 +1,5 @@
 <template>
-  <MainLayout>
-    <div class="settings-page">
+  <div class="settings-page">
       <!-- 保存按钮 -->
       <div class="header-actions">
         <a-button type="primary" size="large" @click="saveSettings" :loading="loading" id="save-settings-btn">
@@ -221,12 +220,10 @@
         </a-card>
       </div>
     </div>
-  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import MainLayout from '../layouts/MainLayout.vue'
 import { settingsApi } from '../api'
 import type { Settings } from '../api/settings'
 import { message } from 'ant-design-vue'

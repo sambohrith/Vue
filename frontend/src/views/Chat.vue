@@ -1,6 +1,5 @@
 <template>
-  <MainLayout>
-    <div class="chat-page">
+  <div class="chat-page">
       <!-- 普通用户聊天界面 -->
       <div v-if="!isAdmin" class="chat-container">
         <div class="chat-list">
@@ -292,12 +291,10 @@
         </div>
       </div>
     </div>
-  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import MainLayout from '../layouts/MainLayout.vue'
 import { useUserStore } from '../stores/user'
 import { chatApi, userApi } from '../api'
 import type { Contact, ChatMessage, Conversation } from '../types'

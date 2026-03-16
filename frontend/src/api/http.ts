@@ -3,6 +3,7 @@ import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, Inte
 import { message } from 'ant-design-vue'
 import { HTTP_STATUS, STORAGE_KEYS } from '@/constants'
 import { storage } from '@/utils'
+import router from '@/router'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'
 
@@ -142,7 +143,7 @@ class HttpService {
   private handleUnauthorized() {
     storage.remove(STORAGE_KEYS.TOKEN)
     storage.remove(STORAGE_KEYS.USER_ROLE)
-    window.location.href = '/login'
+    router.push('/login')
   }
 
   // HTTP 方法封装

@@ -1,6 +1,5 @@
 <template>
-  <MainLayout>
-    <div class="room-chat-container">
+  <div class="room-chat-container">
       <!-- 顶部标题栏 -->
       <header class="chat-header">
         <div class="header-left">
@@ -146,14 +145,13 @@
         </div>
       </a-modal>
     </div>
-  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Empty } from 'ant-design-vue'
-import MainLayout from '@/layouts/MainLayout.vue'
+// import MainLayout from '@/layouts/MainLayout.vue'
 import { useUserStore } from '@/stores/user'
 import { roomApi } from '@/api'
 import type { RoomMessage } from '@/types'

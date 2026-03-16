@@ -1,6 +1,5 @@
 <template>
-  <MainLayout>
-    <div class="users-page">
+  <div class="users-page">
       <!-- 用户列表卡片 -->
       <a-card class="users-card" :bordered="false">
         <template #title>
@@ -237,12 +236,10 @@
         </a-form>
       </a-modal>
     </div>
-  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import MainLayout from '../layouts/MainLayout.vue'
 import { userApi } from '../api'
 import type { User } from '../types'
 import { message, Modal } from 'ant-design-vue'

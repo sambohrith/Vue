@@ -1,162 +1,169 @@
 <template>
-  <MainLayout>
-    <div class="rooms-page">
-      <div class="rooms-header">
+  <div class="rooms-page">
+    <div class="rooms-content">
+      <!-- 标签页头部 -->
+      <div class="tabs-header">
+        <a-tabs v-model:activeKey="activeTab" class="custom-tabs">
+          <a-tab-pane key="my-rooms" tab="我的房间"></a-tab-pane>
+          <a-tab-pane key="public-rooms" tab="公开房间"></a-tab-pane>
+          <a-tab-pane key="join-room" tab="加入房间"></a-tab-pane>
+        </a-tabs>
         <a-button type="primary" class="create-btn" @click="showCreateRoomModal = true">
           <i class="fas fa-plus"></i>
           创建房间
         </a-button>
       </div>
 
-      <div class="rooms-content">
-        <a-tabs v-model:activeKey="activeTab" class="custom-tabs">
-          <a-tab-pane key="my-rooms" tab="我的房间">
-            <div class="rooms-grid">
-              <a-spin :spinning="loading">
-                <a-empty v-if="!loading && myRooms.length === 0" description="你还没有加入任何房间" />
-                <div v-else class="grid-container">
-                  <div v-for="room in myRooms" :key="room.id" class="room-card" @click="enterRoom(room.id, room.name)">
-                    <div class="card-header">
-                      <div class="room-icon">
-                        {{ getInitials(room.name) }}
-                      </div>
-                      <div class="room-status" :class="{ active: room.isPublic }"></div>
+      <!-- 标签页内容 -->
+      <div class="tab-content">
+        <!-- 我的房间 -->
+        <div v-show="activeTab === 'my-rooms'" class="tab-panel">
+          <div class="rooms-grid">
+            <a-spin :spinning="loading">
+              <a-empty v-if="!loading && myRooms.length === 0" description="你还没有加入任何房间" />
+              <div v-else class="grid-container">
+                <div v-for="room in myRooms" :key="room.id" class="room-card" @click="enterRoom(room.id, room.name)">
+                  <div class="card-header">
+                    <div class="room-icon">
+                      {{ getInitials(room.name) }}
                     </div>
-                    <div class="card-body">
-                      <h4 class="room-name">{{ room.name }}</h4>
-                      <p class="room-desc">{{ room.description || '暂无描述' }}</p>
-                    </div>
-                    <div class="card-footer">
-                      <span class="stat">
-                        <i class="fas fa-users"></i>
-                        {{ room.memberCount }}
-                      </span>
-                      <span class="stat">
-                        <i class="fas fa-comment"></i>
-                        {{ room.messageCount || 0 }}
-                      </span>
-                    </div>
+                    <div class="room-status" :class="{ active: room.isPublic }"></div>
+                  </div>
+                  <div class="card-body">
+                    <h4 class="room-name">{{ room.name }}</h4>
+                    <p class="room-desc">{{ room.description || '暂无描述' }}</p>
+                  </div>
+                  <div class="card-footer">
+                    <span class="stat">
+                      <i class="fas fa-users"></i>
+                      {{ room.memberCount }}
+                    </span>
+                    <span class="stat">
+                      <i class="fas fa-comment"></i>
+                      {{ room.messageCount || 0 }}
+                    </span>
                   </div>
                 </div>
-              </a-spin>
-            </div>
-          </a-tab-pane>
-
-          <a-tab-pane key="public-rooms" tab="公开房间">
-            <div class="search-box">
-              <a-input
-                v-model:value="searchQuery"
-                placeholder="搜索房间..."
-                allow-clear
-              >
-                <template #prefix>
-                  <i class="fas fa-search"></i>
-                </template>
-              </a-input>
-            </div>
-            <div class="rooms-grid">
-              <a-spin :spinning="loading">
-                <a-empty v-if="!loading && filteredPublicRooms.length === 0" description="暂无公开房间" />
-                <div v-else class="grid-container">
-                  <div v-for="room in filteredPublicRooms" :key="room.id" class="room-card">
-                    <div class="card-header">
-                      <div class="room-icon" :style="getRandomColor(room.id)">
-                        {{ getInitials(room.name) }}
-                      </div>
-                      <div class="room-status active"></div>
-                    </div>
-                    <div class="card-body">
-                      <h4 class="room-name">{{ room.name }}</h4>
-                      <p class="room-desc">{{ room.description || '暂无描述' }}</p>
-                    </div>
-                    <div class="card-footer">
-                      <span class="stat">
-                        <i class="fas fa-users"></i>
-                        {{ room.memberCount }}
-                      </span>
-                      <a-button type="primary" size="small" @click.stop="joinRoom(room.id)">
-                        加入
-                      </a-button>
-                    </div>
-                  </div>
-                </div>
-              </a-spin>
-            </div>
-          </a-tab-pane>
-
-          <a-tab-pane key="join-room" tab="加入房间">
-            <div class="join-room-container">
-              <div class="join-card">
-                <div class="join-icon">
-                  <i class="fas fa-key"></i>
-                </div>
-                <h3>通过邀请码加入</h3>
-                <p>输入6位邀请码加入私密房间</p>
-                <a-form @submit.prevent="joinRoomByCode" class="join-form">
-                  <a-input
-                    v-model:value="inviteCode"
-                    placeholder="请输入邀请码"
-                    :max-length="6"
-                    class="code-input"
-                  />
-                  <a-button
-                    type="primary"
-                    size="large"
-                    :disabled="!inviteCode.trim()"
-                    @click="joinRoomByCode"
-                    block
-                  >
-                    <i class="fas fa-sign-in-alt mr-1"></i>
-                    加入房间
-                  </a-button>
-                </a-form>
               </div>
-            </div>
-          </a-tab-pane>
-        </a-tabs>
-      </div>
-
-      <!-- 创建房间弹窗 -->
-      <a-modal v-model:open="showCreateRoomModal" title="创建新房间" width="480px" :footer="null">
-        <div class="create-room-content">
-          <div class="preview-icon" :style="{ background: getPreviewColor }">
-            {{ getInitials(newRoom.name) }}
+            </a-spin>
           </div>
-          <a-form @submit.prevent="createRoom" layout="vertical">
-            <a-form-item label="房间名称" required>
-              <a-input v-model:value="newRoom.name" placeholder="给房间起个名字" />
-            </a-form-item>
-            <a-form-item label="房间描述">
-              <a-textarea
-                v-model:value="newRoom.description"
-                :rows="3"
-                placeholder="简单描述一下这个房间..."
-              />
-            </a-form-item>
-            <a-form-item>
-              <div class="public-toggle">
-                <span>公开房间</span>
-                <a-switch v-model:checked="newRoom.isPublic" />
-              </div>
-              <div class="toggle-hint">{{ newRoom.isPublic ? '所有人都可以发现和加入' : '只有被邀请的人可以加入' }}</div>
-            </a-form-item>
-            <div class="form-footer">
-              <a-button @click="showCreateRoomModal = false">取消</a-button>
-              <a-button type="primary" :loading="loading" @click="createRoom">
-                创建房间
-              </a-button>
-            </div>
-          </a-form>
         </div>
-      </a-modal>
+
+        <!-- 公开房间 -->
+        <div v-show="activeTab === 'public-rooms'" class="tab-panel">
+          <div class="search-box">
+            <a-input
+              v-model:value="searchQuery"
+              placeholder="搜索房间..."
+              allow-clear
+            >
+              <template #prefix>
+                <i class="fas fa-search"></i>
+              </template>
+            </a-input>
+          </div>
+          <div class="rooms-grid">
+            <a-spin :spinning="loading">
+              <a-empty v-if="!loading && filteredPublicRooms.length === 0" description="暂无公开房间" />
+              <div v-else class="grid-container">
+                <div v-for="room in filteredPublicRooms" :key="room.id" class="room-card">
+                  <div class="card-header">
+                    <div class="room-icon" :style="getRandomColor(room.id)">
+                      {{ getInitials(room.name) }}
+                    </div>
+                    <div class="room-status active"></div>
+                  </div>
+                  <div class="card-body">
+                    <h4 class="room-name">{{ room.name }}</h4>
+                    <p class="room-desc">{{ room.description || '暂无描述' }}</p>
+                  </div>
+                  <div class="card-footer">
+                    <span class="stat">
+                      <i class="fas fa-users"></i>
+                      {{ room.memberCount }}
+                    </span>
+                    <a-button type="primary" size="small" @click.stop="joinRoom(room.id)">
+                      加入
+                    </a-button>
+                  </div>
+                </div>
+              </div>
+            </a-spin>
+          </div>
+        </div>
+
+        <!-- 加入房间 -->
+        <div v-show="activeTab === 'join-room'" class="tab-panel">
+          <div class="join-room-container">
+            <div class="join-card">
+              <div class="join-icon">
+                <i class="fas fa-key"></i>
+              </div>
+              <h3>通过邀请码加入</h3>
+              <p>输入6位邀请码加入私密房间</p>
+              <a-form @submit.prevent="joinRoomByCode" class="join-form">
+                <a-input
+                  v-model:value="inviteCode"
+                  placeholder="请输入邀请码"
+                  :max-length="6"
+                  class="code-input"
+                />
+                <a-button
+                  type="primary"
+                  size="large"
+                  :disabled="!inviteCode.trim()"
+                  @click="joinRoomByCode"
+                  block
+                >
+                  <i class="fas fa-sign-in-alt mr-1"></i>
+                  加入房间
+                </a-button>
+              </a-form>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </MainLayout>
+
+    <!-- 创建房间弹窗 -->
+    <a-modal v-model:open="showCreateRoomModal" title="创建新房间" width="480px" :footer="null">
+      <div class="create-room-content">
+        <div class="preview-icon" :style="{ background: getPreviewColor }">
+          {{ getInitials(newRoom.name) }}
+        </div>
+        <a-form @submit.prevent="createRoom" layout="vertical">
+          <a-form-item label="房间名称" required>
+            <a-input v-model:value="newRoom.name" placeholder="给房间起个名字" />
+          </a-form-item>
+          <a-form-item label="房间描述">
+            <a-textarea
+              v-model:value="newRoom.description"
+              :rows="3"
+              placeholder="简单描述一下这个房间..."
+            />
+          </a-form-item>
+          <a-form-item>
+            <div class="public-toggle">
+              <span>公开房间</span>
+              <a-switch v-model:checked="newRoom.isPublic" />
+            </div>
+            <div class="toggle-hint">{{ newRoom.isPublic ? '所有人都可以发现和加入' : '只有被邀请的人可以加入' }}</div>
+          </a-form-item>
+          <div class="form-footer">
+            <a-button @click="showCreateRoomModal = false">取消</a-button>
+            <a-button type="primary" :loading="loading" @click="createRoom">
+              创建房间
+            </a-button>
+          </div>
+        </a-form>
+      </div>
+    </a-modal>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import MainLayout from '@/layouts/MainLayout.vue'
 import { roomApi } from '@/api'
 import { getInitials } from '@/utils'
 import type { Room } from '@/types'
@@ -192,7 +199,7 @@ const getPreviewColor = computed(() => {
 const filteredPublicRooms = computed(() => {
   if (!searchQuery.value) return publicRooms.value
   const query = searchQuery.value.toLowerCase()
-  return publicRooms.value.filter(room => 
+  return publicRooms.value.filter(room =>
     room.name.toLowerCase().includes(query) ||
     (room.description && room.description.toLowerCase().includes(query))
   )
@@ -238,7 +245,7 @@ const joinRoom = async (roomId: number) => {
 
 const joinRoomByCode = async () => {
   if (!inviteCode.value.trim()) return
-  
+
   try {
     await roomApi.joinRoomByCode(inviteCode.value.trim())
     inviteCode.value = ''
@@ -250,16 +257,16 @@ const joinRoomByCode = async () => {
 
 const createRoom = async () => {
   if (!newRoom.value.name.trim()) return
-  
+
   loading.value = true
   try {
     const room = await roomApi.createRoom(newRoom.value)
-    
+
     myRooms.value.push(room)
     if (room.isPublic) {
       publicRooms.value.push(room)
     }
-    
+
     showCreateRoomModal.value = false
     newRoom.value = {
       name: '',
@@ -285,36 +292,26 @@ onMounted(() => {
   min-height: calc(100vh - 64px);
 }
 
-.rooms-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2937;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-}
-
-.create-btn {
-  border-radius: 8px;
-}
-
-/* 标签页样式 */
 .rooms-content {
   background: white;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.custom-tabs :deep(.ant-tabs-nav) {
+/* 标签页头部 - 包含标签和创建按钮 */
+.tabs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 0 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-tabs {
+  flex: 1;
+}
+
+.custom-tabs :deep(.ant-tabs-nav) {
   margin-bottom: 0;
 }
 
@@ -322,7 +319,13 @@ onMounted(() => {
   padding: 16px 0;
 }
 
-.custom-tabs :deep(.ant-tabs-content) {
+.create-btn {
+  border-radius: 8px;
+  margin-left: 16px;
+}
+
+/* 标签页内容 */
+.tab-content {
   padding: 24px;
 }
 
@@ -533,7 +536,23 @@ onMounted(() => {
   .rooms-page {
     padding: 16px;
   }
-  
+
+  .tabs-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .create-btn {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+
+  .tab-content {
+    padding: 16px;
+  }
+
   .grid-container {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -542,12 +561,6 @@ onMounted(() => {
 @media (max-width: 480px) {
   .grid-container {
     grid-template-columns: 1fr;
-  }
-  
-  .rooms-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
   }
 }
 </style>

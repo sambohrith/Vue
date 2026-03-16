@@ -4,7 +4,7 @@ import { useUserStore } from '@/stores/user'
 import { message } from 'ant-design-vue'
 import { ROUTE_NAMES, USER_ROLES, STORAGE_KEYS } from '@/constants'
 import { storage } from '@/utils'
-import Dashboard from '@/views/Dashboard.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 
 // 路由配置
 const routes: RouteRecordRaw[] = [
@@ -24,69 +24,75 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/Register.vue'),
     meta: { guest: true, title: '注册' }
   },
+  // 主布局路由 - 所有需要侧边栏的页面
   {
-    path: '/dashboard',
-    name: ROUTE_NAMES.DASHBOARD,
-    component: Dashboard,
-    meta: { requiresAuth: true, title: '仪表盘' }
-  },
-  {
-    path: '/profile',
-    name: ROUTE_NAMES.PROFILE,
-    component: () => import('@/views/Profile.vue'),
-    meta: { requiresAuth: true, title: '个人资料' }
-  },
-  {
-    path: '/contacts',
-    name: ROUTE_NAMES.CONTACTS,
-    component: () => import('@/views/Contacts.vue'),
-    meta: { requiresAuth: true, title: '联系人' }
-  },
-  {
-    path: '/chat',
-    name: ROUTE_NAMES.CHAT,
-    component: () => import('@/views/Chat.vue'),
-    meta: { requiresAuth: true, title: '消息中心' }
-  },
-  {
-    path: '/posts',
-    name: ROUTE_NAMES.POSTS,
-    component: () => import('@/views/Posts.vue'),
-    meta: { requiresAuth: true, title: '说说' }
-  },
-  {
-    path: '/rooms',
-    name: ROUTE_NAMES.ROOMS,
-    component: () => import('@/views/Rooms.vue'),
-    meta: { requiresAuth: true, title: '圈子' }
-  },
-  {
-    path: '/room/:id',
-    name: ROUTE_NAMES.ROOM_CHAT,
-    component: () => import('@/views/RoomChat.vue'),
-    meta: { requiresAuth: true, title: '房间聊天' }
-  },
-  {
-    path: '/users',
-    name: ROUTE_NAMES.USERS,
-    component: () => import('@/views/Users.vue'),
-    meta: { 
-      requiresAuth: true, 
-      requiresAdmin: true, 
-      title: '用户管理',
-      icon: 'fas fa-users'
-    }
-  },
-  {
-    path: '/settings',
-    name: ROUTE_NAMES.SETTINGS,
-    component: () => import('@/views/Settings.vue'),
-    meta: { 
-      requiresAuth: true, 
-      requiresAdmin: true, 
-      title: '系统设置',
-      icon: 'fas fa-cog'
-    }
+    path: '/',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'dashboard',
+        name: ROUTE_NAMES.DASHBOARD,
+        component: () => import('@/views/Dashboard.vue'),
+        meta: { title: '仪表盘' }
+      },
+      {
+        path: 'profile',
+        name: ROUTE_NAMES.PROFILE,
+        component: () => import('@/views/Profile.vue'),
+        meta: { title: '个人资料' }
+      },
+      {
+        path: 'contacts',
+        name: ROUTE_NAMES.CONTACTS,
+        component: () => import('@/views/Contacts.vue'),
+        meta: { title: '联系人' }
+      },
+      {
+        path: 'chat',
+        name: ROUTE_NAMES.CHAT,
+        component: () => import('@/views/Chat.vue'),
+        meta: { title: '消息中心' }
+      },
+      {
+        path: 'posts',
+        name: ROUTE_NAMES.POSTS,
+        component: () => import('@/views/Posts.vue'),
+        meta: { title: '说说' }
+      },
+      {
+        path: 'rooms',
+        name: ROUTE_NAMES.ROOMS,
+        component: () => import('@/views/Rooms.vue'),
+        meta: { title: '圈子' }
+      },
+      {
+        path: 'room/:id',
+        name: ROUTE_NAMES.ROOM_CHAT,
+        component: () => import('@/views/RoomChat.vue'),
+        meta: { title: '房间聊天' }
+      },
+      {
+        path: 'users',
+        name: ROUTE_NAMES.USERS,
+        component: () => import('@/views/Users.vue'),
+        meta: { 
+          requiresAdmin: true, 
+          title: '用户管理',
+          icon: 'fas fa-users'
+        }
+      },
+      {
+        path: 'settings',
+        name: ROUTE_NAMES.SETTINGS,
+        component: () => import('@/views/Settings.vue'),
+        meta: { 
+          requiresAdmin: true, 
+          title: '系统设置',
+          icon: 'fas fa-cog'
+        }
+      }
+    ]
   },
   // 404 页面
   {

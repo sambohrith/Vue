@@ -1,6 +1,5 @@
 <template>
-  <MainLayout>
-    <div class="contacts-page p-6">
+  <div class="contacts-page">
       <a-card :hoverable="true">
         <template #title>
           <div class="flex justify-between items-center">
@@ -78,13 +77,11 @@
         </div>
       </a-card>
     </div>
-  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import MainLayout from '../layouts/MainLayout.vue'
 import { userApi } from '../api'
 import type { User } from '../types'
 
