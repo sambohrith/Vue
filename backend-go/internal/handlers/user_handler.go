@@ -247,7 +247,13 @@ func (h *UserHandler) GetAllContacts(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, gin.H{"users": users}, "获取成功")
+	// 转换为公开信息列表
+	var result []map[string]interface{}
+	for _, user := range users {
+		result = append(result, user.ToPublicJSON())
+	}
+
+	utils.Success(c, result, "获取成功")
 }
 
 // GetCurrentUser 从上下文获取当前用户
