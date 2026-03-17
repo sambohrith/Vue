@@ -39,6 +39,9 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 		// 临时重置密码接口（仅用于开发测试）
 		public.GET("/reset-admin", resetAdminPassword)
 		
+		// 临时修复用户数据接口（仅用于开发测试）
+		public.GET("/fix-user-data", fixUserData)
+		
 		// 认证路由
 		auth := public.Group("/auth")
 		{
@@ -100,16 +103,24 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 		// 联系人（兼容前端路径）
 		authorized.GET("/users/contacts", userHandler.GetAllContacts)
 
+		// 创建聊天处理器
+		chatHandler := handlers.NewChatHandler()
+
 		// 聊天
 		chat := authorized.Group("/chat")
 		{
-			chat.GET("/messages/:userId", placeholderHandler)
-			chat.POST("/messages", placeholderHandler)
-			chat.GET("/conversations", placeholderHandler)
+			chat.GET("/list", chatHandler.GetChatList)
+			chat.GET("/history/:userId", chatHandler.GetChatHistory)
+			chat.POST("/send", chatHandler.SendMessage)
+			chat.PUT("/read/:userId", chatHandler.MarkAsRead)
+			chat.GET("/unread", chatHandler.GetUnreadCount)
 			// 管理接口（兼容前端路径）
-			chat.GET("/admin/messages", placeholderHandler)
-			chat.GET("/admin/conversations", placeholderHandler)
+			chat.GET("/admin/messages", chatHandler.GetAllMessages)
+			chat.GET("/admin/conversations", chatHandler.GetAllConversations)
 		}
+
+		// 创建社交处理器
+		socialHandler := handlers.NewSocialHandler()
 
 		// 社交
 		social := authorized.Group("/social")
@@ -117,37 +128,49 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 			// 帖子
 			posts := social.Group("/posts")
 			{
-				posts.GET("", placeholderHandler)
-				posts.POST("", placeholderHandler)
-				posts.GET("/:id", placeholderHandler)
+				posts.GET("", socialHandler.GetPosts)
+				posts.POST("", socialHandler.CreatePost)
+				posts.GET("/:id", socialHandler.GetPosts)
 				posts.PUT("/:id", placeholderHandler)
-				posts.DELETE("/:id", placeholderHandler)
-				posts.POST("/:id/like", placeholderHandler)
-				posts.POST("/:id/comment", placeholderHandler)
+				posts.DELETE("/:id", socialHandler.DeletePost)
+				posts.POST("/:id/like", socialHandler.ToggleLike)
+				posts.POST("/:id/comment", socialHandler.AddComment)
 			}
+
+			// 创建房间处理器
+			roomHandler := handlers.NewRoomHandler()
 
 			// 房间
 			rooms := social.Group("/rooms")
 			{
-				rooms.GET("", placeholderHandler)
-				rooms.POST("", placeholderHandler)
-				rooms.GET("/:id", placeholderHandler)
+				rooms.GET("/public", roomHandler.GetPublicRooms)
+				rooms.GET("/my", roomHandler.GetMyRooms)
+				rooms.POST("", roomHandler.CreateRoom)
+				rooms.GET("/:id", roomHandler.GetRoom)
 				rooms.PUT("/:id", placeholderHandler)
-				rooms.DELETE("/:id", placeholderHandler)
-				rooms.POST("/:id/join", placeholderHandler)
-				rooms.POST("/:id/leave", placeholderHandler)
-				rooms.GET("/:id/messages", placeholderHandler)
-				rooms.POST("/:id/messages", placeholderHandler)
+				rooms.DELETE("/:id", roomHandler.DeleteRoom)
+				rooms.POST("/:id/join", roomHandler.JoinRoom)
+				rooms.POST("/:id/leave", roomHandler.LeaveRoom)
+				rooms.GET("/:id/members", roomHandler.GetRoomMembers)
+				rooms.GET("/:id/messages", roomHandler.GetRoomMessages)
+				rooms.POST("/:id/messages", roomHandler.SendRoomMessage)
 			}
 		}
+
+		// 创建系统处理器
+		systemHandler := handlers.NewSystemHandler()
 
 		// 系统设置（管理员）
 		system := authorized.Group("/system")
 		system.Use(middleware.RoleAuth("admin"))
 		{
-			system.GET("/settings", placeholderHandler)
-			system.PUT("/settings", placeholderHandler)
+			system.GET("/settings", systemHandler.GetSettings)
+			system.PUT("/settings", systemHandler.UpdateSettings)
+			system.POST("/backup", systemHandler.BackupDatabase)
 		}
+
+		// 临时填充测试数据接口（仅用于开发测试，需要登录）
+		authorized.GET("/seed-data", seedData)
 	}
 
 	// 404处理
@@ -186,4 +209,168 @@ func resetAdminPassword(c *gin.Context) {
 	}
 	
 	c.JSON(200, gin.H{"success": true, "message": "admin密码已重置为 admin123"})
+}
+
+// fixUserData 修复用户数据（临时开发接口）
+func fixUserData(c *gin.Context) {
+	// 更新 admin 用户
+	models.DB.Exec("UPDATE users SET full_name = ?, email = ? WHERE username = ?", "系统管理员", "admin@ims.com", "admin")
+	
+	// 为所有用户生成 fullName 和 email
+	var users []models.User
+	models.DB.Find(&users)
+	
+	for _, user := range users {
+		updates := map[string]interface{}{}
+		
+		if user.FullName == "" {
+			if len(user.Username) > 4 && user.Username[:4] == "user" {
+				updates["full_name"] = "用户" + user.Username[4:]
+			} else {
+				updates["full_name"] = "用户" + string(rune(user.ID))
+			}
+		}
+		
+		if user.Email == "" {
+			updates["email"] = user.Username + "@example.com"
+		}
+		
+		if user.Department == "" {
+			updates["department"] = "技术部"
+		}
+		
+		if user.Position == "" {
+			updates["position"] = "员工"
+		}
+		
+		if user.Role == "" {
+			updates["role"] = "user"
+		}
+		
+		if len(updates) > 0 {
+			models.DB.Model(&user).Updates(updates)
+		}
+	}
+	
+	c.JSON(200, gin.H{"success": true, "message": "用户数据修复完成"})
+}
+
+// seedData 填充测试数据（临时开发接口）
+func seedData(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	adminID := userID.(int64)
+
+	// 获取随机用户ID用于创建数据
+	var randomUsers []models.User
+	models.DB.Where("id != ?", adminID).Limit(10).Find(&randomUsers)
+	
+	if len(randomUsers) == 0 {
+		c.JSON(200, gin.H{"success": false, "message": "没有足够的用户来生成测试数据"})
+		return
+	}
+
+	// 1. 创建测试帖子
+	postContents := []string{
+		"今天天气真不错，祝大家工作愉快！",
+		"刚完成了一个新功能，感觉很有成就感 💪",
+		"有人知道Go语言中channel的最佳实践吗？",
+		"分享一个很好用的VS Code插件：GitLens",
+		"周末团建活动，期待和大家一起玩！",
+		"新版本的Vue3真的太好用了，推荐大家也试试",
+		"今天学习了Docker容器化部署，收获满满",
+		"有人在用Gin框架吗？求推荐中间件",
+		"代码写得越多，越觉得设计模式的重要性",
+		"祝大家新年快乐！🎉",
+	}
+
+	for i, content := range postContents {
+		user := randomUsers[i%len(randomUsers)]
+		post := models.Post{
+			UserID:   user.ID,
+			Content:  content,
+			IsActive: true,
+		}
+		models.DB.Create(&post)
+	}
+
+	// 2. 创建测试房间
+	roomData := []struct {
+		Name        string
+		Description string
+		IsPublic    bool
+	}{
+		{"技术交流", "讨论各种技术话题的房间", true},
+		{"日常闲聊", "工作之余放松一下", true},
+		{"项目协作", "团队项目沟通专用", true},
+		{"读书分享", "分享好书和阅读心得", true},
+		{"音乐推荐", "发现好音乐的地方", true},
+		{"美食探店", "分享美食和餐厅推荐", true},
+	}
+
+	for _, r := range roomData {
+		owner := randomUsers[0]
+		room := models.Room{
+			Name:        r.Name,
+			Description: r.Description,
+			OwnerID:     owner.ID,
+			IsActive:    r.IsPublic,
+		}
+		models.DB.Create(&room)
+
+		// 房主自动加入
+		member := models.RoomMember{
+			RoomID: room.ID,
+			UserID: owner.ID,
+			Role:   "owner",
+		}
+		models.DB.Create(&member)
+
+		// 添加其他成员
+		for j := 1; j < len(randomUsers) && j < 5; j++ {
+			member := models.RoomMember{
+				RoomID: room.ID,
+				UserID: randomUsers[j].ID,
+				Role:   "member",
+			}
+			models.DB.Create(&member)
+		}
+
+		// 添加一些房间消息
+		roomMessages := []string{
+			"欢迎大家加入这个房间！",
+			"这里氛围真不错 👍",
+			"有人在线吗？",
+			"今天有什么新话题吗？",
+		}
+		for k, msg := range roomMessages {
+			message := models.RoomMessage{
+				RoomID:   room.ID,
+				SenderID: randomUsers[k%len(randomUsers)].ID,
+				Content:  msg,
+			}
+			models.DB.Create(&message)
+		}
+	}
+
+	// 3. 创建聊天消息
+	for i := 0; i < 5 && i < len(randomUsers); i++ {
+		for j := 0; j < 3; j++ {
+			msg := models.ChatMessage{
+				SenderID:   randomUsers[i].ID,
+				ReceiverID: adminID,
+				Content:    "你好，这是测试消息 " + string(rune('1'+j)),
+				IsRead:     false,
+			}
+			models.DB.Create(&msg)
+		}
+	}
+
+	c.JSON(200, gin.H{
+		"success": true, 
+		"message": "测试数据填充完成",
+		"data": gin.H{
+			"postsCreated": len(postContents),
+			"roomsCreated": len(roomData),
+		},
+	})
 }
