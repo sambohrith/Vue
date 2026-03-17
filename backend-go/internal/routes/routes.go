@@ -81,6 +81,10 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 			profile.PUT("", userHandler.UpdateMyInfo)
 		}
 
+		// 用户自己信息（兼容前端路径）
+		authorized.GET("/users/me", userHandler.GetMyInfo)
+		authorized.PUT("/users/me", userHandler.UpdateMyInfo)
+
 		// 仪表盘
 		dashboard := authorized.Group("/dashboard")
 		{
@@ -93,12 +97,18 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 			contacts.GET("", userHandler.GetAllContacts)
 		}
 
+		// 联系人（兼容前端路径）
+		authorized.GET("/users/contacts", userHandler.GetAllContacts)
+
 		// 聊天
 		chat := authorized.Group("/chat")
 		{
 			chat.GET("/messages/:userId", placeholderHandler)
 			chat.POST("/messages", placeholderHandler)
 			chat.GET("/conversations", placeholderHandler)
+			// 管理接口（兼容前端路径）
+			chat.GET("/admin/messages", placeholderHandler)
+			chat.GET("/admin/conversations", placeholderHandler)
 		}
 
 		// 社交

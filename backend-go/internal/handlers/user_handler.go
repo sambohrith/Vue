@@ -188,7 +188,7 @@ func (h *UserHandler) GetMyInfo(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, gin.H{"user": user.ToProfileJSON()}, "获取成功")
+	utils.Success(c, user.ToProfileJSON(), "获取成功")
 }
 
 // UpdateMyInfo 更新我的信息
@@ -207,7 +207,7 @@ func (h *UserHandler) UpdateMyInfo(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, gin.H{"user": user.ToProfileJSON()}, "信息更新成功")
+	utils.Success(c, user.ToProfileJSON(), "信息更新成功")
 }
 
 // GetDashboardStats 获取仪表盘统计
