@@ -195,7 +195,8 @@
                 </div>
               </div>
             </div>
-            <div class="conversation-list" v-loading="adminLoading">
+            <a-spin :spinning="adminLoading" class="conversation-list-spin">
+            <div class="conversation-list">
               <a-empty v-if="!adminLoading && filteredConversations.length === 0" description="暂无对话" />
               <div v-else class="conversation-items">
                 <div
@@ -228,6 +229,7 @@
                 </div>
               </div>
             </div>
+            </a-spin>
           </div>
 
           <!-- 右侧消息详情 -->

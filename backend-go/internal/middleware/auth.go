@@ -126,6 +126,7 @@ func JWTAuth() gin.HandlerFunc {
 		// 将用户信息存入上下文
 		c.Set("user", &user)
 		c.Set("userID", user.ID)
+		c.Set("userRole", user.Role)
 		c.Next()
 	}
 }
@@ -166,6 +167,7 @@ func OptionalAuth() gin.HandlerFunc {
 		if user.IsActive {
 			c.Set("user", &user)
 			c.Set("userID", user.ID)
+			c.Set("userRole", user.Role)
 		}
 		
 		c.Next()
