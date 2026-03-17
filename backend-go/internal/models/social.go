@@ -8,8 +8,8 @@ import (
 
 // Post 帖子/动态模型
 type Post struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	UserID    uint           `json:"userId" gorm:"index;not null"`
+	ID        int64          `json:"id" gorm:"primaryKey;autoIncrement"`
+	UserID    int64          `json:"userId" gorm:"index;not null"`
 	Content   string         `json:"content" gorm:"type:text;not null"`
 	Images    string         `json:"images" gorm:"type:text"` // JSON数组存储图片URL
 	IsActive  bool           `json:"isActive" gorm:"default:true"`
@@ -34,9 +34,9 @@ func (Post) TableName() string {
 
 // PostLike 帖子点赞模型
 type PostLike struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	PostID    uint           `json:"postId" gorm:"index;not null"`
-	UserID    uint           `json:"userId" gorm:"index;not null"`
+	ID        int64          `json:"id" gorm:"primaryKey;autoIncrement"`
+	PostID    int64          `json:"postId" gorm:"index;not null"`
+	UserID    int64          `json:"userId" gorm:"index;not null"`
 	CreatedAt time.Time      `json:"createdAt"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 
@@ -52,10 +52,10 @@ func (PostLike) TableName() string {
 
 // PostComment 帖子评论模型
 type PostComment struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	PostID    uint           `json:"postId" gorm:"index;not null"`
-	UserID    uint           `json:"userId" gorm:"index;not null"`
-	ParentID  *uint          `json:"parentId" gorm:"index"` // 回复的评论ID
+	ID        int64          `json:"id" gorm:"primaryKey;autoIncrement"`
+	PostID    int64          `json:"postId" gorm:"index;not null"`
+	UserID    int64          `json:"userId" gorm:"index;not null"`
+	ParentID  *int64         `json:"parentId" gorm:"index"` // 回复的评论ID
 	Content   string         `json:"content" gorm:"type:text;not null"`
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
@@ -75,7 +75,7 @@ func (PostComment) TableName() string {
 
 // SystemSettings 系统设置模型
 type SystemSettings struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
+	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
 	Key       string    `json:"key" gorm:"uniqueIndex;not null;size:100"`
 	Value     string    `json:"value" gorm:"type:text"`
 	UpdatedAt time.Time `json:"updatedAt"`

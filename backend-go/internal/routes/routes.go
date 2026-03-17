@@ -6,6 +6,7 @@ import (
 	"backend-go/config"
 	"backend-go/internal/handlers"
 	"backend-go/internal/middleware"
+	"backend-go/internal/models"
 	"backend-go/internal/services"
 
 	"github.com/gin-contrib/cors"
@@ -34,6 +35,9 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 	{
 		// 健康检查
 		public.GET("/health", healthCheck)
+		
+		// 临时重置密码接口（仅用于开发测试）
+		public.GET("/reset-admin", resetAdminPassword)
 		
 		// 认证路由
 		auth := public.Group("/auth")
@@ -92,9 +96,9 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 		// 聊天
 		chat := authorized.Group("/chat")
 		{
-			chat.GET("/messages/:userId", getChatMessages)
-			chat.POST("/messages", sendMessage)
-			chat.GET("/conversations", getConversations)
+			chat.GET("/messages/:userId", placeholderHandler)
+			chat.POST("/messages", placeholderHandler)
+			chat.GET("/conversations", placeholderHandler)
 		}
 
 		// 社交
@@ -103,27 +107,27 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 			// 帖子
 			posts := social.Group("/posts")
 			{
-				posts.GET("", getPosts)
-				posts.POST("", createPost)
-				posts.GET("/:id", getPost)
-				posts.PUT("/:id", updatePost)
-				posts.DELETE("/:id", deletePost)
-				posts.POST("/:id/like", likePost)
-				posts.POST("/:id/comment", commentPost)
+				posts.GET("", placeholderHandler)
+				posts.POST("", placeholderHandler)
+				posts.GET("/:id", placeholderHandler)
+				posts.PUT("/:id", placeholderHandler)
+				posts.DELETE("/:id", placeholderHandler)
+				posts.POST("/:id/like", placeholderHandler)
+				posts.POST("/:id/comment", placeholderHandler)
 			}
 
 			// 房间
 			rooms := social.Group("/rooms")
 			{
-				rooms.GET("", getRooms)
-				rooms.POST("", createRoom)
-				rooms.GET("/:id", getRoom)
-				rooms.PUT("/:id", updateRoom)
-				rooms.DELETE("/:id", deleteRoom)
-				rooms.POST("/:id/join", joinRoom)
-				rooms.POST("/:id/leave", leaveRoom)
-				rooms.GET("/:id/messages", getRoomMessages)
-				rooms.POST("/:id/messages", sendRoomMessage)
+				rooms.GET("", placeholderHandler)
+				rooms.POST("", placeholderHandler)
+				rooms.GET("/:id", placeholderHandler)
+				rooms.PUT("/:id", placeholderHandler)
+				rooms.DELETE("/:id", placeholderHandler)
+				rooms.POST("/:id/join", placeholderHandler)
+				rooms.POST("/:id/leave", placeholderHandler)
+				rooms.GET("/:id/messages", placeholderHandler)
+				rooms.POST("/:id/messages", placeholderHandler)
 			}
 		}
 
@@ -131,8 +135,8 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 		system := authorized.Group("/system")
 		system.Use(middleware.RoleAuth("admin"))
 		{
-			system.GET("/settings", getSettings)
-			system.PUT("/settings", updateSettings)
+			system.GET("/settings", placeholderHandler)
+			system.PUT("/settings", placeholderHandler)
 		}
 	}
 
@@ -149,27 +153,27 @@ func healthCheck(c *gin.Context) {
 	})
 }
 
-// 占位符处理器（待实现）
-func getChatMessages(c *gin.Context)    { c.JSON(200, gin.H{"success": true, "data": []}) }
-func sendMessage(c *gin.Context)        { c.JSON(200, gin.H{"success": true}) }
-func getConversations(c *gin.Context)   { c.JSON(200, gin.H{"success": true, "data": []}) }
-func getPosts(c *gin.Context)           { c.JSON(200, gin.H{"success": true, "data": []}) }
-func createPost(c *gin.Context)         { c.JSON(201, gin.H{"success": true}) }
-func getPost(c *gin.Context)            { c.JSON(200, gin.H{"success": true}) }
-func updatePost(c *gin.Context)         { c.JSON(200, gin.H{"success": true}) }
-func deletePost(c *gin.Context)         { c.JSON(200, gin.H{"success": true}) }
-func likePost(c *gin.Context)           { c.JSON(200, gin.H{"success": true}) }
-func commentPost(c *gin.Context)        { c.JSON(201, gin.H{"success": true}) }
-func getRooms(c *gin.Context)           { c.JSON(200, gin.H{"success": true, "data": []}) }
-func createRoom(c *gin.Context)         { c.JSON(201, gin.H{"success": true}) }
-func getRoom(c *gin.Context)            { c.JSON(200, gin.H{"success": true}) }
-func updateRoom(c *gin.Context)         { c.JSON(200, gin.H{"success": true}) }
-func deleteRoom(c *gin.Context)         { c.JSON(200, gin.H{"success": true}) }
-func joinRoom(c *gin.Context)           { c.JSON(200, gin.H{"success": true}) }
-func leaveRoom(c *gin.Context)          { c.JSON(200, gin.H{"success": true}) }
-func getRoomMessages(c *gin.Context)    { c.JSON(200, gin.H{"success": true, "data": []}) }
-func sendRoomMessage(c *gin.Context)    { c.JSON(201, gin.H{"success": true}) }
-func getSettings(c *gin.Context)        { c.JSON(200, gin.H{"success": true, "data": {}}) }
-func updateSettings(c *gin.Context)     { c.JSON(200, gin.H{"success": true}) }
+// placeholderHandler 占位符处理器
+func placeholderHandler(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"success": true,
+		"data":    []interface{}{},
+	})
+}
 
-
+// resetAdminPassword 临时重置admin密码（仅用于开发测试）
+func resetAdminPassword(c *gin.Context) {
+	var user models.User
+	if err := models.DB.Where("username = ?", "admin").First(&user).Error; err != nil {
+		c.JSON(200, gin.H{"success": false, "message": "admin用户不存在"})
+		return
+	}
+	
+	user.Password = "admin123"
+	if err := models.DB.Save(&user).Error; err != nil {
+		c.JSON(200, gin.H{"success": false, "message": "重置失败: " + err.Error()})
+		return
+	}
+	
+	c.JSON(200, gin.H{"success": true, "message": "admin密码已重置为 admin123"})
+}

@@ -99,7 +99,7 @@ func (s *UserService) ListUsers(req ListUsersRequest) (*ListUsersResponse, error
 }
 
 // GetUserByID 根据ID获取用户
-func (s *UserService) GetUserByID(id uint) (*models.User, error) {
+func (s *UserService) GetUserByID(id int64) (*models.User, error) {
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -169,7 +169,7 @@ func (s *UserService) CreateUser(req CreateUserRequest) (*models.User, error) {
 		return nil, err
 	}
 
-	logger.Info("创建用户成功", zap.Uint("user_id", user.ID))
+	logger.Info("创建用户成功", zap.Int64("user_id", user.ID))
 	return &user, nil
 }
 
@@ -184,7 +184,7 @@ type UpdateUserRequest struct {
 }
 
 // UpdateUser 更新用户
-func (s *UserService) UpdateUser(id uint, req UpdateUserRequest) (*models.User, error) {
+func (s *UserService) UpdateUser(id int64, req UpdateUserRequest) (*models.User, error) {
 	user, err := s.GetUserByID(id)
 	if err != nil {
 		return nil, err
@@ -224,26 +224,26 @@ func (s *UserService) UpdateUser(id uint, req UpdateUserRequest) (*models.User, 
 	}
 
 	if err := s.db.Save(user).Error; err != nil {
-		logger.Error("更新用户失败", zap.Error(err), zap.Uint("user_id", id))
+		logger.Error("更新用户失败", zap.Error(err), zap.Int64("user_id", id))
 		return nil, err
 	}
 
-	logger.Info("更新用户成功", zap.Uint("user_id", id))
+	logger.Info("更新用户成功", zap.Int64("user_id", id))
 	return user, nil
 }
 
 // DeleteUser 删除用户
-func (s *UserService) DeleteUser(id uint) error {
+func (s *UserService) DeleteUser(id int64) error {
 	if err := s.db.Delete(&models.User{}, id).Error; err != nil {
-		logger.Error("删除用户失败", zap.Error(err), zap.Uint("user_id", id))
+		logger.Error("删除用户失败", zap.Error(err), zap.Int64("user_id", id))
 		return err
 	}
-	logger.Info("删除用户成功", zap.Uint("user_id", id))
+	logger.Info("删除用户成功", zap.Int64("user_id", id))
 	return nil
 }
 
 // ToggleUserActive 切换用户状态
-func (s *UserService) ToggleUserActive(id uint) (*models.User, error) {
+func (s *UserService) ToggleUserActive(id int64) (*models.User, error) {
 	user, err := s.GetUserByID(id)
 	if err != nil {
 		return nil, err
@@ -316,7 +316,7 @@ type UpdateProfileRequest struct {
 }
 
 // UpdateProfile 更新个人资料
-func (s *UserService) UpdateProfile(userID uint, req UpdateProfileRequest) (*models.User, error) {
+func (s *UserService) UpdateProfile(userID int64, req UpdateProfileRequest) (*models.User, error) {
 	user, err := s.GetUserByID(userID)
 	if err != nil {
 		return nil, err

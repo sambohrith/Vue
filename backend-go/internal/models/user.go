@@ -9,7 +9,7 @@ import (
 
 // User 用户模型
 type User struct {
-	ID        uint           `json:"id" gorm:"primaryKey"`
+	ID        int64          `json:"id" gorm:"primaryKey;autoIncrement"`
 	Username  string         `json:"username" gorm:"uniqueIndex;not null;size:50"`
 	Email     string         `json:"email" gorm:"uniqueIndex;not null;size:100"`
 	Password  string         `json:"-" gorm:"not null"` // 不在JSON中显示

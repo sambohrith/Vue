@@ -42,12 +42,20 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 		return
 	}
 
-	utils.Paginated(c, result.Users, utils.Pagination{
-		Page:       result.Page,
-		Limit:      result.Limit,
-		Total:      result.Total,
-		TotalPages: result.TotalPages,
-	}, "获取成功")
+	// 返回格式适配前端期望 - 使用标准 data 包装
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "获取成功",
+		"data": gin.H{
+			"users": result.Users,
+			"pagination": gin.H{
+				"page":       result.Page,
+				"limit":      result.Limit,
+				"total":      result.Total,
+				"totalPages": result.TotalPages,
+			},
+		},
+	})
 }
 
 // GetUser 获取单个用户
@@ -58,7 +66,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetUserByID(uint(id))
+	user, err := h.service.GetUserByID(int64(id))
 	if err != nil {
 		utils.Error(c, http.StatusNotFound, err.Error())
 		return
@@ -98,7 +106,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.UpdateUser(uint(id), req)
+	user, err := h.service.UpdateUser(int64(id), req)
 	if err != nil {
 		utils.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -117,12 +125,12 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 
 	// 不能删除自己
 	currentUserID, _ := c.Get("userID")
-	if uint(id) == currentUserID.(uint) {
+	if int64(id) == currentUserID.(int64) {
 		utils.Error(c, http.StatusBadRequest, "不能删除自己的账号")
 		return
 	}
 
-	if err := h.service.DeleteUser(uint(id)); err != nil {
+	if err := h.service.DeleteUser(int64(id)); err != nil {
 		utils.Error(c, http.StatusInternalServerError, "删除用户失败")
 		return
 	}
@@ -140,12 +148,12 @@ func (h *UserHandler) ToggleUserActive(c *gin.Context) {
 
 	// 不能禁用自己
 	currentUserID, _ := c.Get("userID")
-	if uint(id) == currentUserID.(uint) {
+	if int64(id) == currentUserID.(int64) {
 		utils.Error(c, http.StatusBadRequest, "不能禁用自己的账号")
 		return
 	}
 
-	user, err := h.service.ToggleUserActive(uint(id))
+	user, err := h.service.ToggleUserActive(int64(id))
 	if err != nil {
 		utils.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -174,7 +182,7 @@ func (h *UserHandler) GetUserStats(c *gin.Context) {
 func (h *UserHandler) GetMyInfo(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	
-	user, err := h.service.GetUserByID(userID.(uint))
+	user, err := h.service.GetUserByID(userID.(int64))
 	if err != nil {
 		utils.Error(c, http.StatusNotFound, err.Error())
 		return
@@ -193,7 +201,7 @@ func (h *UserHandler) UpdateMyInfo(c *gin.Context) {
 
 	userID, _ := c.Get("userID")
 	
-	user, err := h.service.UpdateProfile(userID.(uint), req)
+	user, err := h.service.UpdateProfile(userID.(int64), req)
 	if err != nil {
 		utils.Error(c, http.StatusBadRequest, err.Error())
 		return

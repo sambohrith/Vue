@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -91,8 +92,8 @@ func (rl *RateLimiter) Middleware() gin.HandlerFunc {
 		
 		// 如果已登录，使用用户ID
 		if userID, exists := c.Get("userID"); exists {
-			if id, ok := userID.(uint); ok {
-				key = "user:" + string(rune(id))
+			if id, ok := userID.(int64); ok {
+				key = "user:" + strconv.FormatInt(id, 10)
 			}
 		}
 

@@ -110,8 +110,14 @@ func (s *AuthService) Login(req LoginRequest, clientIP string) (*LoginResponse, 
 	}
 
 	if !user.ComparePassword(req.Password) {
-		logger.Auth("login", user.ID, false, zap.String("ip", clientIP), zap.String("username", req.Username), zap.String("reason", "密码错误"))
-		return nil, errors.New("账号或密码错误")
+		// 临时兼容：尝试明文密码比较（云端数据库遗留数据）
+		if user.Password != req.Password {
+			logger.Auth("login", user.ID, false, zap.String("ip", clientIP), zap.String("username", req.Username), zap.String("reason", "密码错误"))
+			return nil, errors.New("账号或密码错误")
+		}
+		// 明文密码匹配，更新为加密密码
+		user.Password = req.Password
+		s.db.Save(&user)
 	}
 
 	// 更新登录信息
@@ -134,7 +140,7 @@ func (s *AuthService) Login(req LoginRequest, clientIP string) (*LoginResponse, 
 }
 
 // Logout 用户登出
-func (s *AuthService) Logout(userID uint, clientIP string) error {
+func (s *AuthService) Logout(userID int64, clientIP string) error {
 	logger.Auth("logout", userID, true, zap.String("ip", clientIP))
 	return nil
 }
@@ -146,7 +152,7 @@ type ChangePasswordRequest struct {
 }
 
 // ChangePassword 修改密码
-func (s *AuthService) ChangePassword(userID uint, req ChangePasswordRequest, clientIP string) error {
+func (s *AuthService) ChangePassword(userID int64, req ChangePasswordRequest, clientIP string) error {
 	var user models.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		return errors.New("用户不存在")
@@ -158,7 +164,7 @@ func (s *AuthService) ChangePassword(userID uint, req ChangePasswordRequest, cli
 
 	user.Password = req.NewPassword
 	if err := s.db.Save(&user).Error; err != nil {
-		logger.Error("修改密码失败", zap.Error(err), zap.Uint("user_id", userID))
+		logger.Error("修改密码失败", zap.Error(err), zap.Int64("user_id", userID))
 		return errors.New("修改密码失败")
 	}
 
@@ -167,7 +173,7 @@ func (s *AuthService) ChangePassword(userID uint, req ChangePasswordRequest, cli
 }
 
 // GetCurrentUser 获取当前用户信息
-func (s *AuthService) GetCurrentUser(userID uint) (map[string]interface{}, error) {
+func (s *AuthService) GetCurrentUser(userID int64) (map[string]interface{}, error) {
 	var user models.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		return nil, errors.New("用户不存在")
@@ -176,7 +182,7 @@ func (s *AuthService) GetCurrentUser(userID uint) (map[string]interface{}, error
 }
 
 // GetUserProfile 获取用户个人资料
-func (s *AuthService) GetUserProfile(userID uint) (map[string]interface{}, error) {
+func (s *AuthService) GetUserProfile(userID int64) (map[string]interface{}, error) {
 	var user models.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		return nil, errors.New("用户不存在")
@@ -203,7 +209,7 @@ func (s *AuthService) RefreshToken(req RefreshTokenRequest) (*LoginResponse, err
 	}
 
 	var user models.User
-	if err := s.db.First(&user, uint(userID)).Error; err != nil {
+	if err := s.db.First(&user, userID).Error; err != nil {
 		return nil, errors.New("用户不存在")
 	}
 

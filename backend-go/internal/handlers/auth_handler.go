@@ -46,7 +46,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	result, err := h.service.Login(req, c.ClientIP())
 	if err != nil {
-		utils.Error(c, http.StatusUnauthorized, err.Error())
+		utils.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -57,7 +57,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	
-	err := h.service.Logout(userID.(uint), c.ClientIP())
+	err := h.service.Logout(userID.(int64), c.ClientIP())
 	if err != nil {
 		utils.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -70,7 +70,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 func (h *AuthHandler) GetMe(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	
-	user, err := h.service.GetCurrentUser(userID.(uint))
+	user, err := h.service.GetCurrentUser(userID.(int64))
 	if err != nil {
 		utils.Error(c, http.StatusNotFound, err.Error())
 		return
@@ -83,7 +83,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 func (h *AuthHandler) GetProfile(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	
-	profile, err := h.service.GetUserProfile(userID.(uint))
+	profile, err := h.service.GetUserProfile(userID.(int64))
 	if err != nil {
 		utils.Error(c, http.StatusNotFound, err.Error())
 		return
@@ -102,7 +102,7 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 
 	userID, _ := c.Get("userID")
 	
-	err := h.service.ChangePassword(userID.(uint), req, c.ClientIP())
+	err := h.service.ChangePassword(userID.(int64), req, c.ClientIP())
 	if err != nil {
 		utils.Error(c, http.StatusBadRequest, err.Error())
 		return

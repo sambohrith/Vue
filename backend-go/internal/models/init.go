@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -37,6 +37,7 @@ func InitDatabase(cfg *config.Config, log *zap.Logger) error {
 
 	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.Default.LogMode(gormLogLevel),
+		DisableForeignKeyConstraintWhenMigrating: true,
 	})
 	if err != nil {
 		return fmt.Errorf("连接数据库失败: %w", err)
@@ -59,6 +60,17 @@ func InitDatabase(cfg *config.Config, log *zap.Logger) error {
 
 // AutoMigrate 自动迁移数据库表
 func AutoMigrate() error {
+	// 先删除云端数据库中不兼容的外键约束
+	tables := []string{"chat_messages", "rooms", "room_members", "room_messages", "posts", "post_likes", "post_comments"}
+	for _, table := range tables {
+		var constraints []string
+		DB.Raw(`SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS 
+			WHERE CONSTRAINT_TYPE = 'FOREIGN KEY' AND TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`, table).Scan(&constraints)
+		for _, constraint := range constraints {
+			DB.Exec(fmt.Sprintf("ALTER TABLE %s DROP FOREIGN KEY %s", table, constraint))
+		}
+	}
+	
 	return DB.AutoMigrate(
 		&User{},
 		&ChatMessage{},

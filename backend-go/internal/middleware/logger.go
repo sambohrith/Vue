@@ -30,9 +30,9 @@ func Logger() gin.HandlerFunc {
 		}
 
 		// 获取用户ID
-		var userID uint
+		var userID int64
 		if uid, exists := c.Get("userID"); exists {
-			if id, ok := uid.(uint); ok {
+			if id, ok := uid.(int64); ok {
 				userID = id
 			}
 		}

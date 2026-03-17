@@ -101,7 +101,7 @@ func Fatal(msg string, fields ...zap.Field) {
 }
 
 // HTTPRequest 记录HTTP请求日志
-func HTTPRequest(method, path string, status int, duration time.Duration, clientIP, userAgent string, userID uint) {
+func HTTPRequest(method, path string, status int, duration time.Duration, clientIP, userAgent string, userID int64) {
 	fields := []zap.Field{
 		zap.String("method", method),
 		zap.String("path", path),
@@ -111,7 +111,7 @@ func HTTPRequest(method, path string, status int, duration time.Duration, client
 		zap.String("user_agent", userAgent),
 	}
 	if userID > 0 {
-		fields = append(fields, zap.Uint("user_id", userID))
+		fields = append(fields, zap.Int64("user_id", userID))
 	}
 
 	if status >= 400 {
@@ -122,10 +122,10 @@ func HTTPRequest(method, path string, status int, duration time.Duration, client
 }
 
 // Auth 记录认证相关日志
-func Auth(action string, userID uint, success bool, fields ...zap.Field) {
+func Auth(action string, userID int64, success bool, fields ...zap.Field) {
 	baseFields := []zap.Field{
 		zap.String("action", action),
-		zap.Uint("user_id", userID),
+		zap.Int64("user_id", userID),
 		zap.Bool("success", success),
 	}
 	baseFields = append(baseFields, fields...)

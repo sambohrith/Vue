@@ -13,11 +13,11 @@ jwt:
 
 database:
   driver: mysql
-  host: localhost
+  host: 106.15.91.86
   port: 3306
-  name: ims_db
-  user: root
-  password: ""
+  name: ims
+  user: ims
+  password: ChPPkF6NdarARhzn
   charset: utf8mb4
   parse_time: true
   loc: Local

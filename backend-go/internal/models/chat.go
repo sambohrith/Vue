@@ -8,9 +8,9 @@ import (
 
 // ChatMessage 聊天消息模型
 type ChatMessage struct {
-	ID         uint           `json:"id" gorm:"primaryKey"`
-	SenderID   uint           `json:"senderId" gorm:"index;not null"`
-	ReceiverID uint           `json:"receiverId" gorm:"index;not null"`
+	ID         int64          `json:"id" gorm:"primaryKey;autoIncrement"`
+	SenderID   int64          `json:"senderId" gorm:"index;not null"`
+	ReceiverID int64          `json:"receiverId" gorm:"index;not null"`
 	Content    string         `json:"content" gorm:"type:text;not null"`
 	IsRead     bool           `json:"isRead" gorm:"default:false"`
 	CreatedAt  time.Time      `json:"createdAt"`
@@ -29,10 +29,10 @@ func (ChatMessage) TableName() string {
 
 // Room 房间/群组模型
 type Room struct {
-	ID          uint           `json:"id" gorm:"primaryKey"`
+	ID          int64          `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name        string         `json:"name" gorm:"size:100;not null"`
 	Description string         `json:"description" gorm:"type:text"`
-	OwnerID     uint           `json:"ownerId" gorm:"index;not null"`
+	OwnerID     int64          `json:"ownerId" gorm:"index;not null"`
 	IsActive    bool           `json:"isActive" gorm:"default:true"`
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
@@ -50,9 +50,9 @@ func (Room) TableName() string {
 
 // RoomMember 房间成员模型
 type RoomMember struct {
-	ID       uint           `json:"id" gorm:"primaryKey"`
-	RoomID   uint           `json:"roomId" gorm:"index;not null"`
-	UserID   uint           `json:"userId" gorm:"index;not null"`
+	ID       int64          `json:"id" gorm:"primaryKey;autoIncrement"`
+	RoomID   int64          `json:"roomId" gorm:"index;not null"`
+	UserID   int64          `json:"userId" gorm:"index;not null"`
 	Role     string         `json:"role" gorm:"default:'member';size:20"` // owner, admin, member
 	JoinedAt time.Time      `json:"joinedAt" gorm:"autoCreateTime"`
 	CreatedAt time.Time     `json:"createdAt"`
@@ -71,9 +71,9 @@ func (RoomMember) TableName() string {
 
 // RoomMessage 房间消息模型
 type RoomMessage struct {
-	ID       uint           `json:"id" gorm:"primaryKey"`
-	RoomID   uint           `json:"roomId" gorm:"index;not null"`
-	SenderID uint           `json:"senderId" gorm:"index;not null"`
+	ID       int64          `json:"id" gorm:"primaryKey;autoIncrement"`
+	RoomID   int64          `json:"roomId" gorm:"index;not null"`
+	SenderID int64          `json:"senderId" gorm:"index;not null"`
 	Content  string         `json:"content" gorm:"type:text;not null"`
 	CreatedAt time.Time     `json:"createdAt"`
 	UpdatedAt time.Time     `json:"updatedAt"`

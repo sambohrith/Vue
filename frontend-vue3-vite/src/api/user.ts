@@ -72,7 +72,7 @@ export const userApi = {
     if (role) queryParams.append('role', role)
     if (isActive !== '') queryParams.append('isActive', isActive.toString())
     
-    return http.get<any>(`/users/admin?${queryParams.toString()}`).then(response => {
+    return http.get<any>(`/users?${queryParams.toString()}`).then(response => {
       return {
         users: response.users,
         total: response.pagination.total,
@@ -83,31 +83,31 @@ export const userApi = {
   },
 
   getUser(userId: number) {
-    return http.get<User>(`/users/admin/${userId}`)
+    return http.get<User>(`/users/${userId}`)
   },
 
   createUser(data: Partial<User> & { password: string }) {
-    return http.post<User>('/users/admin', data)
+    return http.post<User>('/users', data)
   },
 
   updateUser(userId: number, data: Partial<User>) {
-    return http.put<User>(`/users/admin/${userId}`, data)
+    return http.put<User>(`/users/${userId}`, data)
   },
 
   deleteUser(userId: number) {
-    return http.delete(`/users/admin/${userId}`)
+    return http.delete(`/users/${userId}`)
   },
 
   updateUserStatus(userId: number, isActive: boolean) {
-    return http.patch(`/users/admin/${userId}/status`, { isActive })
+    return http.patch(`/users/${userId}/toggle`, { isActive })
   },
 
   getUserStats() {
-    return http.get<UserStats>('/users/admin/stats')
+    return http.get<UserStats>('/users/stats')
   },
 
   getDashboardStats() {
-    return http.get<DashboardStats>('/users/admin/dashboard')
+    return http.get<DashboardStats>('/dashboard/stats')
   }
 }
 
