@@ -25,16 +25,6 @@ type Response struct {
 	RequestID string      `json:"requestId,omitempty"`
 }
 
-// PaginatedResponse 分页响应结构
-type PaginatedResponse struct {
-	Success    bool        `json:"success"`
-	Message    string      `json:"message"`
-	Data       interface{} `json:"data,omitempty"`
-	Pagination Pagination  `json:"pagination"`
-	Timestamp  string      `json:"timestamp"`
-	RequestID  string      `json:"requestId,omitempty"`
-}
-
 // ErrorResponse 错误响应结构
 type ErrorResponse struct {
 	Success   bool              `json:"success"`
@@ -72,21 +62,6 @@ func Created(c *gin.Context, data interface{}, message string) {
 	c.JSON(http.StatusCreated, response)
 }
 
-// Paginated 分页响应
-func Paginated(c *gin.Context, data interface{}, pagination Pagination, message string) {
-	response := PaginatedResponse{
-		Success:    true,
-		Message:    message,
-		Data:       data,
-		Pagination: pagination,
-		Timestamp:  FormatTime(nil),
-	}
-	if rid, exists := c.Get("requestID"); exists {
-		response.RequestID = rid.(string)
-	}
-	c.JSON(http.StatusOK, response)
-}
-
 // Error 错误响应
 func Error(c *gin.Context, statusCode int, message string) {
 	response := Response{
@@ -122,51 +97,6 @@ func ValidationError(c *gin.Context, err error) {
 		response.RequestID = rid.(string)
 	}
 	c.JSON(http.StatusBadRequest, response)
-}
-
-// BadRequest 400错误
-func BadRequest(c *gin.Context, message string) {
-	Error(c, http.StatusBadRequest, message)
-}
-
-// Unauthorized 401错误
-func Unauthorized(c *gin.Context, message string) {
-	if message == "" {
-		message = "未授权访问"
-	}
-	Error(c, http.StatusUnauthorized, message)
-}
-
-// Forbidden 403错误
-func Forbidden(c *gin.Context, message string) {
-	if message == "" {
-		message = "禁止访问"
-	}
-	Error(c, http.StatusForbidden, message)
-}
-
-// NotFound 404错误
-func NotFound(c *gin.Context, message string) {
-	if message == "" {
-		message = "资源不存在"
-	}
-	Error(c, http.StatusNotFound, message)
-}
-
-// Conflict 409错误
-func Conflict(c *gin.Context, message string) {
-	if message == "" {
-		message = "资源冲突"
-	}
-	Error(c, http.StatusConflict, message)
-}
-
-// TooManyRequests 429错误
-func TooManyRequests(c *gin.Context, message string) {
-	if message == "" {
-		message = "请求过于频繁，请稍后再试"
-	}
-	Error(c, http.StatusTooManyRequests, message)
 }
 
 // FormatTime 格式化时间
