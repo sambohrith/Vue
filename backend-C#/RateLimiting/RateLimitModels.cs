@@ -1,4 +1,6 @@
 // Rate Limiting Models for AspNetCoreRateLimit
+using Microsoft.Extensions.Options;
+
 namespace IMS;
 
 public class IpRateLimitOptions
@@ -143,12 +145,12 @@ public class IpRateLimitMiddleware
         RequestDelegate next,
         IRateLimitCounterStore counterStore,
         IIpPolicyStore policyStore,
-        IpRateLimitOptions options)
+        IOptions<IpRateLimitOptions> options)
     {
         _next = next;
         _counterStore = counterStore;
         _policyStore = policyStore;
-        _options = options;
+        _options = options.Value;
     }
 
     public async Task InvokeAsync(HttpContext context)

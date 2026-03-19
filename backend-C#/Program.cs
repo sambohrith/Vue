@@ -82,27 +82,71 @@ builder.Services.AddAuthentication(options =>
 
 // Configure Database
 var dbConfig = builder.Configuration.GetSection("Database");
-var driver = dbConfig["Driver"] ?? "sqlite";
+var dbProvider = Environment.GetEnvironmentVariable("DB_PROVIDER") 
+    ?? dbConfig["Provider"] 
+    ?? "sqlite";
+
+// 辅助方法：获取配置值（优先环境变量，支持占位符替换）
+string GetConfigValue(string envVar, string configKey, string defaultValue)
+{
+    var envValue = Environment.GetEnvironmentVariable(envVar);
+    if (!string.IsNullOrEmpty(envValue)) return envValue;
+    
+    var configValue = dbConfig[configKey];
+    if (string.IsNullOrEmpty(configValue) || configValue.StartsWith("${")) return defaultValue;
+    
+    return configValue;
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    switch (driver.ToLower())
+    switch (dbProvider.ToLower())
     {
         case "mysql":
-            var mysqlConn = dbConfig.GetConnectionString("MySQL");
-            options.UseMySql(mysqlConn, ServerVersion.AutoDetect(mysqlConn));
+            var mysqlHost = GetConfigValue("DB_HOST", "MySQL:Host", "localhost");
+            var mysqlPort = GetConfigValue("DB_PORT", "MySQL:Port", "3306");
+            var mysqlDb = GetConfigValue("DB_NAME", "MySQL:Database", "ims");
+            var mysqlUser = GetConfigValue("DB_USER", "MySQL:User", "root");
+            var mysqlPass = GetConfigValue("DB_PASSWORD", "MySQL:Password", "");
+            var mysqlSsl = GetConfigValue("DB_SSLMODE", "MySQL:SslMode", "None");
+            
+            var mysqlConn = $"Server={mysqlHost};Port={mysqlPort};Database={mysqlDb};Uid={mysqlUser};Pwd={mysqlPass};SslMode={mysqlSsl};";
+            options.UseMySql(mysqlConn, new MySqlServerVersion(new Version(8, 0, 30)));
+            Log.Information("Using MySQL database: {Host}:{Port}/{Database}", mysqlHost, mysqlPort, mysqlDb);
             break;
+            
         case "postgresql":
         case "postgres":
-            options.UseNpgsql(dbConfig.GetConnectionString("PostgreSQL"));
+            var pgHost = GetConfigValue("DB_HOST", "PostgreSQL:Host", "localhost");
+            var pgPort = GetConfigValue("DB_PORT", "PostgreSQL:Port", "5432");
+            var pgDb = GetConfigValue("DB_NAME", "PostgreSQL:Database", "ims");
+            var pgUser = GetConfigValue("DB_USER", "PostgreSQL:User", "postgres");
+            var pgPass = GetConfigValue("DB_PASSWORD", "PostgreSQL:Password", "");
+            
+            var pgConn = $"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}";
+            options.UseNpgsql(pgConn);
+            Log.Information("Using PostgreSQL database: {Host}:{Port}/{Database}", pgHost, pgPort, pgDb);
             break;
+            
         case "sqlserver":
-            options.UseSqlServer(dbConfig.GetConnectionString("SQLServer"));
+            var mssqlHost = GetConfigValue("DB_HOST", "SQLServer:Host", "localhost");
+            var mssqlDb = GetConfigValue("DB_NAME", "SQLServer:Database", "ims");
+            var mssqlUser = GetConfigValue("DB_USER", "SQLServer:User", "sa");
+            var mssqlPass = GetConfigValue("DB_PASSWORD", "SQLServer:Password", "");
+            var trustCert = dbConfig.GetValue<bool>("SQLServer:TrustServerCertificate", true);
+            
+            var mssqlConn = $"Server={mssqlHost};Database={mssqlDb};User Id={mssqlUser};Password={mssqlPass};TrustServerCertificate={trustCert};";
+            options.UseSqlServer(mssqlConn);
+            Log.Information("Using SQL Server database: {Host}/{Database}", mssqlHost, mssqlDb);
             break;
+            
         case "sqlite":
         default:
-            var sqlitePath = builder.Configuration.GetValue<string>("SQLite:Path") ?? "ims.db";
+            var sqlitePath = Environment.GetEnvironmentVariable("DB_PATH") 
+                ?? dbConfig["SQLite:Path"] 
+                ?? "ims.db";
             options.UseSqlite($"Data Source={sqlitePath}");
+            Log.Information("Using SQLite database: {Path}", sqlitePath);
             break;
     }
 });
