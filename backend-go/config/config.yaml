@@ -1,6 +1,6 @@
 server:
   port: 3001
-  mode: development
+  mode: production
   allowed_origins:
     - http://localhost:3000
     - http://localhost:3001
@@ -8,7 +8,7 @@ server:
     - http://127.0.0.1:3001
 
 jwt:
-  secret: your-secret-key-change-in-production
+  secret: ims-production-jwt-secret-key-change-this-for-security-2024
   expiration: 24h
 
 database:
@@ -25,12 +25,11 @@ database:
   max_open_conns: 100
   conn_max_lifetime: 3600
 
-# SQLite 配置（当 driver 为 sqlite 时使用）
 sqlite:
   path: ./data/ims.db
 
 log:
-  level: info
+  level: warn
   filename: ./logs/app.log
   max_size: 100
   max_backups: 30
