@@ -5,6 +5,17 @@
 *.sh text eol=lf
 *.js text eol=lf
 
+# Go 文件使用 LF 行尾符
+*.go text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf
+
+# 配置文件使用 LF 行尾符
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+
 # Windows 脚本使用 CRLF 行尾符
 *.bat text eol=crlf
 *.cmd text eol=crlf
