@@ -16,20 +16,16 @@ ims-vue/
 │   │   └── styles/       # 样式文件
 │   ├── package.json
 │   └── vite.config.ts
-├── backend-go/            # Go + Gin 后端
-│   ├── cmd/              # 程序入口
-│   ├── config/           # 配置文件
-│   ├── internal/         # 内部代码
-│   │   ├── handlers/     # HTTP 处理器
+├── backend-JS/            # Node.js + Express 后端
+│   ├── src/              # 源代码
+│   │   ├── controllers/  # 控制器
 │   │   ├── middleware/   # 中间件
 │   │   ├── models/       # 数据模型
 │   │   ├── routes/       # 路由配置
-│   │   └── services/     # 业务逻辑层
-│   ├── pkg/              # 公共包
-│   │   ├── logger/       # 日志
+│   │   ├── services/     # 业务逻辑层
 │   │   └── utils/        # 工具函数
-│   ├── go.mod
-│   └── config.yaml
+│   ├── package.json
+│   └── .env              # 环境变量配置
 ├── .env                  # 环境变量
 └── package.json          # 根项目脚本
 ```
@@ -45,13 +41,13 @@ ims-vue/
 - **HTTP 客户端**: Axios
 
 ### 后端
-- **语言**: Go 1.21+
-- **Web 框架**: Gin
-- **ORM**: GORM
-- **数据库**: MySQL / PostgreSQL / SQLite
+- **语言**: Node.js 18+
+- **Web 框架**: Express
+- **ORM**: Sequelize
+- **数据库**: MySQL / SQLite
 - **认证**: JWT
-- **日志**: Zap + Lumberjack
-- **配置**: Viper
+- **日志**: Winston
+- **配置**: dotenv
 
 ## 快速开始
 
@@ -68,8 +64,8 @@ cd frontend-vue3-vite
 npm install
 
 # 安装后端依赖
-cd ../backend-go
-go mod download
+cd ../backend-JS
+npm install
 ```
 
 或使用根目录脚本：
@@ -80,33 +76,27 @@ npm run install:all
 
 ### 2. 配置环境
 
-**后端配置** `backend-go/config/config.yaml`:
+**后端配置** `backend-JS/.env`:
 
-```yaml
-server:
-  port: 3001
-  mode: development
-  allowed_origins:
-    - http://localhost:3000
+```env
+# 服务器配置
+PORT=3001
+NODE_ENV=development
 
-database:
-  driver: mysql      # 可选: mysql, postgres, sqlite
-  host: localhost
-  port: 3306
-  name: ims_db
-  user: root
-  password: your_password
+# 数据库配置 (MySQL)
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=ims_db
+DB_USER=root
+DB_PASSWORD=your_password
 
-jwt:
-  secret: your-secret-key
-  expiration: 24h
-```
+# 或 SQLite 配置
+# DB_DIALECT=sqlite
+# DB_STORAGE=database.sqlite
 
-或使用环境变量：
-
-```bash
-export IMS_DATABASE_PASSWORD=your_password
-export IMS_JWT_SECRET=your-secret-key
+# JWT 配置
+JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=24h
 ```
 
 **前端配置** `frontend-vue3-vite/.env`:
@@ -234,11 +224,13 @@ npm run build
 
 构建产物位于 `dist/` 目录。
 
-### 后端构建
+### 后端部署
+
+Node.js 后端无需编译，直接启动即可：
 
 ```bash
-cd backend-go
-go build -o ims-server cmd/main.go
+cd backend-JS
+npm start
 ```
 
 ### Docker 部署 (可选)
@@ -270,14 +262,14 @@ docker run -d -p 3000:3000 -p 3001:3001 ims-vue
 - `src/stores/` - Pinia 状态管理
 - `src/composables/` - Vue Composition API 组合函数
 
-### 后端目录 (`backend-go/`)
-- `cmd/` - 应用程序入口
-- `internal/handlers/` - HTTP 请求处理器
-- `internal/services/` - 业务逻辑层
-- `internal/models/` - 数据模型和数据库操作
-- `internal/middleware/` - Gin 中间件
-- `internal/routes/` - 路由配置
-- `pkg/` - 可复用的公共包
+### 后端目录 (`backend-JS/`)
+- `src/app.js` - 应用程序入口
+- `src/controllers/` - HTTP 请求处理器
+- `src/services/` - 业务逻辑层
+- `src/models/` - 数据模型和数据库操作
+- `src/middleware/` - Express 中间件
+- `src/routes/` - 路由配置
+- `src/utils/` - 可复用的工具函数
 
 ## 开发计划
 

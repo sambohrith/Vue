@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "backend:dev": "cd backend && npm run dev",
-    "backend:start": "cd backend && npm start",
+    "backend:dev": "cd ../backend-JS && npm run dev",
+    "backend:start": "cd ../backend-JS && npm start",
     "dev:all": "npm-run-all --parallel dev backend:dev"
   },
   "dependencies": {

@@ -11,9 +11,9 @@
     "frontend:dev": "cd frontend-vue3-vite && npm run dev",
     "frontend:build": "cd frontend-vue3-vite && npm run build",
     "frontend:preview": "cd frontend-vue3-vite && npm run preview",
-    "backend:dev": "cd backend-go && go run cmd/main.go",
-    "backend:start": "cd backend-go && go run cmd/main.go",
-    "backend:build": "cd backend-go && go build -o ims-server cmd/main.go",
+    "backend:dev": "cd backend-JS && npm run dev",
+    "backend:start": "cd backend-JS && npm start",
+    "backend:build": "cd backend-JS && echo 'Node.js backend does not require build'",
     "build": "cd frontend-vue3-vite && npm run build",
     "install:all": "npm install && cd frontend-vue3-vite && npm install",
     "clean": "rimraf frontend-vue3-vite/node_modules node_modules"

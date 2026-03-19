@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * 信息管理系统开发服务器启动脚本
- * 同时启动前端(Vue3)和后端(Go)服务
+ * 同时启动前端(Vue3)和后端(Node.js)服务
  */
 
 import { spawn } from 'child_process';
@@ -112,7 +112,7 @@ async function main() {
 ========================================
    信息管理系统 (IMS) - 开发服务器
    前端: Vue3 + Vite
-   后端: Go + Gin
+   后端: Node.js + Express
 ========================================
 `, 'blue');
 
@@ -123,24 +123,22 @@ async function main() {
     await new Promise((resolve) => install.on('close', resolve));
   }
 
-  // Go 依赖检查
+  // 后端依赖检查
   if (!skipBackend) {
-    const goModPath = path.join(__dirname, 'backend-go', 'go.mod');
-    if (!fs.existsSync(goModPath)) {
-      log('❌ 后端 go.mod 不存在，请确保 backend-go 目录存在', 'red');
+    const backendPath = path.join(__dirname, 'backend-JS');
+    if (!fs.existsSync(backendPath)) {
+      log('❌ 后端目录 backend-JS 不存在', 'red');
       process.exit(1);
     }
     
-    // 检查是否需要下载依赖
-    const vendorPath = path.join(__dirname, 'backend-go', 'vendor');
-    if (!fs.existsSync(vendorPath)) {
-      log('📦 正在检查 Go 依赖...', 'yellow');
-      const download = spawn('go', ['mod', 'download'], { 
-        cwd: 'backend-go', 
-        stdio: 'inherit',
-        shell: true 
+    // 检查是否需要安装依赖
+    if (!fs.existsSync(path.join(backendPath, 'node_modules'))) {
+      log('📦 后端依赖未安装，正在安装...', 'yellow');
+      const install = spawn('npm', ['install'], { 
+        cwd: 'backend-JS', 
+        stdio: 'inherit' 
       });
-      await new Promise((resolve) => download.on('close', resolve));
+      await new Promise((resolve) => install.on('close', resolve));
     }
   }
 
@@ -151,8 +149,8 @@ async function main() {
   }
 
   if (!skipBackend) {
-    log('🚀 正在启动后端服务 (Go)...', 'green');
-    processes.push(createService('backend', 'backend-go', 'go run cmd/main.go', 'green'));
+    log('🚀 正在启动后端服务 (Node.js)...', 'green');
+    processes.push(createService('backend', 'backend-JS', 'npm run dev', 'green'));
     await new Promise(r => setTimeout(r, 2000));
   }
 
