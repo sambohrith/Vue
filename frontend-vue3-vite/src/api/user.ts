@@ -59,7 +59,7 @@ export const userApi = {
   },
 
   getContacts() {
-    return http.get<User[]>('/users/contacts')
+    return http.get<User[]>('/contacts')
   },
 
   getUsers(params: UserListParams = {}) {

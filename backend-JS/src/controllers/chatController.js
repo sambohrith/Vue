@@ -71,9 +71,13 @@ const getAllMessages = async (req, res) => {
 
 const getAllConversations = async (req, res) => {
   try {
-    const conversations = await chatService.getAllConversations();
+    console.log('getAllConversations called with query:', req.query);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const conversations = await chatService.getAllConversations(page, limit);
     return success(res, { conversations }, '获取成功');
   } catch (err) {
+    console.error('Error in getAllConversations:', err);
     return error(res, 500, '获取会话失败');
   }
 };

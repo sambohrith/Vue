@@ -5,7 +5,7 @@ import { HTTP_STATUS, STORAGE_KEYS } from '@/constants'
 import { storage } from '@/utils'
 import router from '@/router'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://106.15.91.86:3001/api'
 
 // 请求配置接口
 interface RequestConfig extends AxiosRequestConfig {

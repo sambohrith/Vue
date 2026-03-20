@@ -1,5 +1,4 @@
 const { sequelize, Sequelize } = require('./database');
-const User = require('./user');
 
 const Post = sequelize.define('Post', {
   id: {
@@ -10,11 +9,7 @@ const Post = sequelize.define('Post', {
   userId: {
     type: Sequelize.BIGINT,
     allowNull: false,
-    field: 'user_id',
-    references: {
-      model: User,
-      key: 'id'
-    }
+    field: 'user_id'
   },
   content: {
     type: Sequelize.TEXT,
@@ -34,8 +29,6 @@ const Post = sequelize.define('Post', {
   deletedAt: 'deletedAt'
 });
 
-Post.belongsTo(User, { as: 'Author', foreignKey: 'userId' });
-
 const PostLike = sequelize.define('PostLike', {
   id: {
     type: Sequelize.BIGINT,
@@ -45,29 +38,18 @@ const PostLike = sequelize.define('PostLike', {
   postId: {
     type: Sequelize.BIGINT,
     allowNull: false,
-    field: 'post_id',
-    references: {
-      model: Post,
-      key: 'id'
-    }
+    field: 'post_id'
   },
   userId: {
     type: Sequelize.BIGINT,
     allowNull: false,
-    field: 'user_id',
-    references: {
-      model: User,
-      key: 'id'
-    }
+    field: 'user_id'
   }
 }, {
   tableName: 'post_likes',
   paranoid: true,
   deletedAt: 'deletedAt'
 });
-
-PostLike.belongsTo(Post, { foreignKey: 'postId' });
-PostLike.belongsTo(User, { foreignKey: 'userId' });
 
 const PostComment = sequelize.define('PostComment', {
   id: {
@@ -78,28 +60,16 @@ const PostComment = sequelize.define('PostComment', {
   postId: {
     type: Sequelize.BIGINT,
     allowNull: false,
-    field: 'post_id',
-    references: {
-      model: Post,
-      key: 'id'
-    }
+    field: 'post_id'
   },
   userId: {
     type: Sequelize.BIGINT,
     allowNull: false,
-    field: 'user_id',
-    references: {
-      model: User,
-      key: 'id'
-    }
+    field: 'user_id'
   },
   parentId: {
     type: Sequelize.BIGINT,
-    field: 'parent_id',
-    references: {
-      model: 'PostComments',
-      key: 'id'
-    }
+    field: 'parent_id'
   },
   content: {
     type: Sequelize.TEXT,
@@ -110,10 +80,6 @@ const PostComment = sequelize.define('PostComment', {
   paranoid: true,
   deletedAt: 'deletedAt'
 });
-
-PostComment.belongsTo(Post, { foreignKey: 'postId' });
-PostComment.belongsTo(User, { as: 'Author', foreignKey: 'userId' });
-PostComment.belongsTo(PostComment, { as: 'Parent', foreignKey: 'parentId' });
 
 const SystemSettings = sequelize.define('SystemSettings', {
   id: {

@@ -1,4 +1,6 @@
-require('dotenv').config();
+// 根据 NODE_ENV 加载对应的环境配置文件
+const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
+require('dotenv').config({ path: envFile });
 
 const express = require('express');
 const cors = require('cors');

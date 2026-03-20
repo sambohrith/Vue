@@ -115,7 +115,8 @@ const getAllContacts = async (req, res) => {
     const contacts = await userService.getAllContacts(req.userId);
     return success(res, { contacts, total: contacts.length }, '获取成功');
   } catch (err) {
-    return error(res, 500, '获取联系人失败');
+    console.error('[getAllContacts] Error:', err.message);
+    return error(res, 500, '获取联系人失败: ' + err.message);
   }
 };
 

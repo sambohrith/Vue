@@ -109,7 +109,9 @@ const refreshContacts = async () => {
     contacts.value = (response as any).users || (response as any) || []
   } catch (error) {
     console.error('Refresh contacts error:', error)
+    // 临时处理：API 报错时显示空列表
     contacts.value = []
+    // 不显示错误提示，静默处理
   } finally {
     loading.value = false
   }

@@ -63,7 +63,7 @@ const auth = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: '用户不存在'
+        message: '用户不存在或令牌已过期，请重新登录'
       });
     }
 

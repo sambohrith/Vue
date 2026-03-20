@@ -32,6 +32,10 @@ router.get('/auth/me', authController.getMe);
 router.get('/auth/profile', authController.getProfile);
 router.post('/auth/change-password', authController.changePassword);
 
+router.get('/users/me', userController.getMyInfo);
+router.put('/users/me', userController.updateMyInfo);
+router.get('/users/contacts', userController.getAllContacts);
+
 router.get('/users', roleAuth('admin'), userController.listUsers);
 router.post('/users', roleAuth('admin'), userController.createUser);
 router.get('/users/stats', roleAuth('admin'), userController.getUserStats);
@@ -39,10 +43,6 @@ router.get('/users/:id', roleAuth('admin'), userController.getUser);
 router.put('/users/:id', roleAuth('admin'), userController.updateUser);
 router.delete('/users/:id', roleAuth('admin'), userController.deleteUser);
 router.patch('/users/:id/toggle', roleAuth('admin'), userController.toggleUserActive);
-
-router.get('/users/me', userController.getMyInfo);
-router.put('/users/me', userController.updateMyInfo);
-router.get('/users/contacts', userController.getAllContacts);
 
 router.get('/profile', userController.getMyInfo);
 router.put('/profile', userController.updateMyInfo);
