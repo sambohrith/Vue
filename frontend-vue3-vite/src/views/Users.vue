@@ -1,241 +1,245 @@
 <template>
   <div class="users-page">
-      <!-- 用户列表卡片 -->
-      <a-card class="users-card" :bordered="false">
-        <template #title>
-          <div class="card-title">
-            <i class="fas fa-list text-gray-400"></i>
-            <span>用户列表</span>
-            <a-tag color="blue" class="count-tag">{{ filteredUsers.length }} 人</a-tag>
+    <div class="page-header-section">
+      <div class="header-content">
+        <div class="header-text">
+          <h1 class="page-title">
+            <i class="fas fa-users-cog"></i>
+            <span>用户管理</span>
+          </h1>
+          <p class="page-subtitle">管理系统用户，分配角色和权限</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-item">
+            <span class="stat-value">{{ users.length }}</span>
+            <span class="stat-label">总用户</span>
           </div>
-        </template>
-        
-        <!-- 筛选栏 -->
-        <div class="filter-bar">
-          <a-input
-            v-model:value="searchQuery"
+          <div class="stat-item">
+            <span class="stat-value">{{ users.filter(u => u.role === 'admin').length }}</span>
+            <span class="stat-label">管理员</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="users-card">
+      <div class="filter-bar">
+        <div class="search-box">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            v-model="searchQuery"
+            type="text"
             placeholder="搜索用户名、姓名或邮箱..."
             class="search-input"
-            id="user-search"
-            allow-clear
-          >
-            <template #prefix>
-              <i class="fas fa-search text-gray-400"></i>
-            </template>
-          </a-input>
-          <a-select
-            v-model:value="roleFilter"
-            placeholder="所有角色"
-            class="filter-select"
-            id="role-filter"
-            allow-clear
-          >
-            <a-select-option value="admin">管理员</a-select-option>
-            <a-select-option value="user">普通用户</a-select-option>
-          </a-select>
-          <a-select
-            v-model:value="statusFilter"
-            placeholder="所有状态"
-            class="filter-select"
-            id="status-filter"
-            allow-clear
-          >
-            <a-select-option value="true">已激活</a-select-option>
-            <a-select-option value="false">已禁用</a-select-option>
-          </a-select>
-          <a-button @click="resetFilters">
-            <i class="fas fa-undo mr-1"></i>
-            重置
-          </a-button>
-          <a-button type="primary" @click="showAddUserModal = true" id="add-user-btn">
-            <i class="fas fa-plus mr-1"></i>
-            添加用户
-          </a-button>
+          />
         </div>
-        
-        <!-- 用户表格 -->
-        <a-table
-          :loading="loading"
-          :data-source="filteredUsers"
-          :columns="columns"
-          :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 位用户` }"
-          id="users-table-body"
-          row-key="id"
-          class="users-table"
+        <a-select
+          v-model:value="roleFilter"
+          placeholder="所有角色"
+          class="filter-select"
+          allow-clear
         >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'avatar'">
-              <a-avatar :size="40" class="user-avatar">
-                {{ record.fullName?.charAt(0) || record.username?.charAt(0) || '?' }}
-              </a-avatar>
-            </template>
-            <template v-if="column.key === 'userInfo'">
-              <div class="user-info-cell">
-                <div class="user-name">{{ record.fullName || record.username }}</div>
-                <div class="user-username">@{{ record.username }}</div>
-              </div>
-            </template>
-            <template v-if="column.key === 'role'">
-              <a-tag :color="record.role === 'admin' ? 'orange' : 'blue'" class="role-tag">
-                <i :class="record.role === 'admin' ? 'fas fa-shield-alt' : 'fas fa-user'"></i>
-                {{ record.role === 'admin' ? '管理员' : '普通用户' }}
-              </a-tag>
-            </template>
-            <template v-if="column.key === 'isActive'">
-              <a-badge 
-                :status="record.isActive ? 'success' : 'error'" 
-                :text="record.isActive ? '已激活' : '已禁用'"
-                class="status-badge"
-              />
-            </template>
-            <template v-if="column.key === 'contact'">
-              <div class="contact-cell">
-                <div><i class="fas fa-envelope text-gray-400 mr-1"></i>{{ record.email }}</div>
-                <div v-if="record.phone" class="text-gray-500 text-sm">
-                  <i class="fas fa-phone text-gray-400 mr-1"></i>{{ record.phone }}
-                </div>
-              </div>
-            </template>
-            <template v-if="column.key === 'department'">
-              <div class="dept-cell">
-                <div>{{ record.department || '-' }}</div>
-                <div v-if="record.position" class="text-gray-500 text-sm">{{ record.position }}</div>
-              </div>
-            </template>
-            <template v-if="column.key === 'lastLogin'">
-              <span class="text-gray-500">{{ record.lastLogin || '从未登录' }}</span>
-            </template>
-            <template v-if="column.key === 'action'">
-              <div class="action-btns">
-                <a-tooltip title="编辑">
-                  <a-button type="link" @click="editUser(record)">
-                    <i class="fas fa-edit text-blue-500"></i>
-                  </a-button>
-                </a-tooltip>
-                <a-tooltip :title="record.isActive ? '禁用' : '激活'">
-                  <a-button type="link" @click="toggleUserStatus(record.id, !record.isActive)">
-                    <i :class="record.isActive ? 'fas fa-ban text-orange-500' : 'fas fa-check-circle text-green-500'"></i>
-                  </a-button>
-                </a-tooltip>
-                <a-tooltip title="删除">
-                  <a-button type="link" danger @click="deleteUser(record.id)">
-                    <i class="fas fa-trash"></i>
-                  </a-button>
-                </a-tooltip>
-              </div>
-            </template>
-          </template>
-        </a-table>
-      </a-card>
+          <a-select-option value="admin">管理员</a-select-option>
+          <a-select-option value="user">普通用户</a-select-option>
+        </a-select>
+        <a-select
+          v-model:value="statusFilter"
+          placeholder="所有状态"
+          class="filter-select"
+          allow-clear
+        >
+          <a-select-option value="true">已激活</a-select-option>
+          <a-select-option value="false">已禁用</a-select-option>
+        </a-select>
+        <a-button class="reset-btn" @click="resetFilters">
+          <i class="fas fa-undo"></i>
+          重置
+        </a-button>
+        <a-button type="primary" class="add-btn" @click="showAddUserModal = true">
+          <i class="fas fa-plus"></i>
+          添加用户
+        </a-button>
+      </div>
 
-      <!-- 添加/编辑用户模态框 -->
-      <a-modal
-        v-model:open="dialogVisible"
-        :title="showEditUserModal ? '编辑用户' : '添加用户'"
-        width="650px"
-        :confirm-loading="loading"
-        @ok="saveUser"
-        @cancel="closeModal"
-        class="user-modal"
+      <a-table
+        :loading="loading"
+        :data-source="filteredUsers"
+        :columns="columns"
+        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 位用户` }"
+        row-key="id"
+        class="users-table"
       >
-        <a-form
-          :model="formData"
-          layout="vertical"
-          class="user-form"
-        >
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="用户名" required>
-                <a-input
-                  v-model:value="formData.username"
-                  placeholder="请输入用户名"
-                  :disabled="showEditUserModal"
-                  prefix="@"
-                />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="姓名" required>
-                <a-input v-model:value="formData.fullName" placeholder="请输入姓名" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="邮箱" required>
-                <a-input v-model:value="formData.email" placeholder="请输入邮箱" type="email">
-                  <template #prefix>
-                    <i class="fas fa-envelope text-gray-400"></i>
-                  </template>
-                </a-input>
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="手机号">
-                <a-input v-model:value="formData.phone" placeholder="请输入手机号" type="tel">
-                  <template #prefix>
-                    <i class="fas fa-phone text-gray-400"></i>
-                  </template>
-                </a-input>
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="部门">
-                <a-input v-model:value="formData.department" placeholder="请输入部门">
-                  <template #prefix>
-                    <i class="fas fa-building text-gray-400"></i>
-                  </template>
-                </a-input>
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="职位">
-                <a-input v-model:value="formData.position" placeholder="请输入职位">
-                  <template #prefix>
-                    <i class="fas fa-briefcase text-gray-400"></i>
-                  </template>
-                </a-input>
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="角色">
-                <a-select v-model:value="formData.role">
-                  <a-select-option value="user">
-                    <i class="fas fa-user mr-2"></i>普通用户
-                  </a-select-option>
-                  <a-select-option value="admin">
-                    <i class="fas fa-shield-alt mr-2"></i>管理员
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="状态">
-                <a-select v-model:value="formData.status">
-                  <a-select-option value="true">
-                    <a-badge status="success" text="已激活" />
-                  </a-select-option>
-                  <a-select-option value="false">
-                    <a-badge status="error" text="已禁用" />
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-form-item label="密码" v-if="!showEditUserModal" required>
-            <a-input-password v-model:value="formData.password" placeholder="请输入密码">
-              <template #prefix>
-                <i class="fas fa-lock text-gray-400"></i>
-              </template>
-            </a-input-password>
-          </a-form-item>
-        </a-form>
-      </a-modal>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'avatar'">
+            <div class="user-avatar">
+              {{ record.fullName?.charAt(0) || record.username?.charAt(0) || '?' }}
+            </div>
+          </template>
+          <template v-if="column.key === 'userInfo'">
+            <div class="user-info-cell">
+              <div class="user-name">{{ record.fullName || record.username }}</div>
+              <div class="user-username">@{{ record.username }}</div>
+            </div>
+          </template>
+          <template v-if="column.key === 'role'">
+            <span class="role-tag" :class="record.role">
+              <i :class="record.role === 'admin' ? 'fas fa-crown' : 'fas fa-user'"></i>
+              {{ record.role === 'admin' ? '管理员' : '普通用户' }}
+            </span>
+          </template>
+          <template v-if="column.key === 'isActive'">
+            <span class="status-badge" :class="{ active: record.isActive }">
+              <span class="status-dot"></span>
+              {{ record.isActive ? '已激活' : '已禁用' }}
+            </span>
+          </template>
+          <template v-if="column.key === 'contact'">
+            <div class="contact-cell">
+              <div><i class="fas fa-envelope"></i>{{ record.email }}</div>
+              <div v-if="record.phone" class="phone">
+                <i class="fas fa-phone"></i>{{ record.phone }}
+              </div>
+            </div>
+          </template>
+          <template v-if="column.key === 'department'">
+            <div class="dept-cell">
+              <div>{{ record.department || '-' }}</div>
+              <div v-if="record.position" class="position">{{ record.position }}</div>
+            </div>
+          </template>
+          <template v-if="column.key === 'lastLogin'">
+            <span class="last-login">{{ record.lastLogin || '从未登录' }}</span>
+          </template>
+          <template v-if="column.key === 'action'">
+            <div class="action-btns">
+              <a-tooltip title="编辑">
+                <a-button type="text" class="action-btn edit-btn" @click="editUser(record)">
+                  <i class="fas fa-edit"></i>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip :title="record.isActive ? '禁用' : '激活'">
+                <a-button type="text" class="action-btn" :class="record.isActive ? 'disable-btn' : 'enable-btn'" @click="toggleUserStatus(record.id, !record.isActive)">
+                  <i :class="record.isActive ? 'fas fa-ban' : 'fas fa-check-circle'"></i>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="删除">
+                <a-button type="text" class="action-btn delete-btn" @click="deleteUser(record.id)">
+                  <i class="fas fa-trash"></i>
+                </a-button>
+              </a-tooltip>
+            </div>
+          </template>
+        </template>
+      </a-table>
     </div>
+
+    <a-modal
+      v-model:open="dialogVisible"
+      :title="showEditUserModal ? '编辑用户' : '添加用户'"
+      width="650px"
+      :confirm-loading="loading"
+      @ok="saveUser"
+      @cancel="closeModal"
+      class="user-modal"
+    >
+      <a-form
+        :model="formData"
+        layout="vertical"
+        class="user-form"
+      >
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="用户名" required>
+              <a-input
+                v-model:value="formData.username"
+                placeholder="请输入用户名"
+                :disabled="showEditUserModal"
+                prefix="@"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="姓名" required>
+              <a-input v-model:value="formData.fullName" placeholder="请输入姓名" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="邮箱" required>
+              <a-input v-model:value="formData.email" placeholder="请输入邮箱" type="email">
+                <template #prefix>
+                  <i class="fas fa-envelope text-gray-400"></i>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="手机号">
+              <a-input v-model:value="formData.phone" placeholder="请输入手机号" type="tel">
+                <template #prefix>
+                  <i class="fas fa-phone text-gray-400"></i>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="部门">
+              <a-input v-model:value="formData.department" placeholder="请输入部门">
+                <template #prefix>
+                  <i class="fas fa-building text-gray-400"></i>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="职位">
+              <a-input v-model:value="formData.position" placeholder="请输入职位">
+                <template #prefix>
+                  <i class="fas fa-briefcase text-gray-400"></i>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="角色">
+              <a-select v-model:value="formData.role">
+                <a-select-option value="user">
+                  <i class="fas fa-user mr-2"></i>普通用户
+                </a-select-option>
+                <a-select-option value="admin">
+                  <i class="fas fa-crown mr-2"></i>管理员
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="状态">
+              <a-select v-model:value="formData.status">
+                <a-select-option value="true">
+                  <a-badge status="success" text="已激活" />
+                </a-select-option>
+                <a-select-option value="false">
+                  <a-badge status="error" text="已禁用" />
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="密码" v-if="!showEditUserModal" required>
+          <a-input-password v-model:value="formData.password" placeholder="请输入密码">
+            <template #prefix>
+              <i class="fas fa-lock text-gray-400"></i>
+            </template>
+          </a-input-password>
+        </a-form-item>
+      </a-form>
+    </a-modal>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -440,61 +444,93 @@ onMounted(() => {
 
 <style scoped>
 .users-page {
-  padding: 24px;
-  background: #f5f7fa;
-  min-height: calc(100vh - 64px);
+  width: 100%;
+  min-height: 100%;
 }
 
-/* 页面头部 */
-.page-header {
+.page-header-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 24px 32px;
+  color: white;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
 }
 
-.header-left {
+.header-text {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .page-title {
+  margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
+.page-title i {
+  font-size: 20px;
+}
+
 .page-subtitle {
-  color: #6b7280;
-  font-size: 14px;
   margin: 0;
+  opacity: 0.85;
+  font-size: 14px;
 }
 
-/* 用户列表卡片 */
-.users-card {
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.card-title {
+.header-stats {
   display: flex;
+  gap: 32px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  gap: 4px;
 }
 
-.count-tag {
-  margin-left: 8px;
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.stat-label {
   font-size: 12px;
+  opacity: 0.85;
 }
 
-/* 筛选栏 */
+.users-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+}
+
 .filter-bar {
   display: flex;
   gap: 12px;
@@ -503,23 +539,76 @@ onMounted(() => {
   align-items: center;
 }
 
+.search-box {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+}
+
 .search-input {
-  width: 280px;
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 .filter-select {
   width: 140px;
 }
 
-/* 表格样式 */
+.reset-btn {
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
 .users-table {
   margin-top: 8px;
 }
 
 .user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
 }
 
 .user-info-cell {
@@ -540,7 +629,40 @@ onMounted(() => {
 .role-tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.role-tag.admin {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.role-tag.user {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.status-badge .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.status-badge.active .status-dot {
+  background: #10b981;
 }
 
 .contact-cell {
@@ -549,9 +671,29 @@ onMounted(() => {
   gap: 4px;
 }
 
+.contact-cell i {
+  color: #9ca3af;
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+.contact-cell .phone {
+  color: #6b7280;
+  font-size: 12px;
+}
+
 .dept-cell {
   display: flex;
   flex-direction: column;
+}
+
+.dept-cell .position {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.last-login {
+  color: #6b7280;
 }
 
 .action-btns {
@@ -560,7 +702,36 @@ onMounted(() => {
   justify-content: center;
 }
 
-/* 模态框样式 */
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  background: #f3f4f6;
+}
+
+.edit-btn {
+  color: #3b82f6;
+}
+
+.disable-btn {
+  color: #f59e0b;
+}
+
+.enable-btn {
+  color: #10b981;
+}
+
+.delete-btn {
+  color: #ef4444;
+}
+
 .user-modal :deep(.ant-modal-header) {
   border-bottom: 1px solid #f0f0f0;
   padding: 20px 24px;
@@ -572,5 +743,30 @@ onMounted(() => {
 
 .user-form :deep(.ant-form-item-label) {
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-stats {
+    align-self: flex-end;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    max-width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
 }
 </style>

@@ -571,11 +571,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ============ 通用样式 ============ */
 .chat-page {
-  padding: 24px;
-  background: #f5f7fa;
-  min-height: calc(100vh - 64px);
+  width: 100%;
+  min-height: 100%;
 }
 
 .chat-avatar {
@@ -584,13 +582,12 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* ============ 普通用户聊天样式 ============ */
 .chat-container {
   display: flex;
   height: calc(100vh - 140px);
   background: white;
   border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
@@ -837,42 +834,60 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* ============ 管理员监控样式 ============ */
 .admin-monitor {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .monitor-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
-  padding: 20px 24px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 24px 32px;
+  border-radius: 16px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.monitor-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
 .header-left {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .header-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
-  color: #1f2937;
+  color: white;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
+.header-title i {
+  font-size: 20px;
+}
+
 .header-subtitle {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
 }
 
@@ -880,6 +895,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-box {
@@ -889,36 +906,35 @@ onMounted(() => {
 
 .stat-label {
   font-size: 12px;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 2px;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
-  color: #4f46e5;
+  color: white;
   line-height: 1.2;
 }
 
 .stat-unit {
   font-size: 14px;
   font-weight: 400;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.85);
   margin-left: 2px;
 }
 
-/* 监控内容区 */
 .monitor-content {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   height: calc(100vh - 260px);
 }
 
 .conversation-panel {
   width: 480px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -927,17 +943,17 @@ onMounted(() => {
 .message-panel {
   flex: 1;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .panel-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fafafa;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  background: white;
 }
 
 .panel-header-row {
@@ -956,8 +972,14 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.panel-title i {
+  color: #667eea;
+}
+
 .count-badge {
   margin-left: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
 }
 
 .panel-filters {
@@ -971,32 +993,34 @@ onMounted(() => {
 .conversation-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 12px;
 }
 
 .conversation-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .conversation-item {
   display: flex;
   align-items: center;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   border: 1px solid transparent;
+  background: #f9fafb;
 }
 
 .conversation-item:hover {
-  background: #f5f5f5;
+  background: #f3f4f6;
+  transform: translateX(4px);
 }
 
 .conversation-item.active {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: #667eea;
 }
 
 .conv-avatars {

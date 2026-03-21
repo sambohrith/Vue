@@ -1,145 +1,146 @@
 <template>
   <div class="posts-page">
-      <div class="posts-container">
-        <!-- 发布框 -->
-        <div class="create-post-card">
-          <div class="create-post-header">
-            <a-avatar :size="48" class="user-avatar">
-              {{ getInitials(userStore.user?.fullName || userStore.user?.username || '我') }}
-            </a-avatar>
-            <div class="input-wrapper">
-              <a-textarea
-                v-model:value="postContent"
-                :rows="3"
-                placeholder="分享你的新鲜事..."
-                :maxlength="500"
-                class="post-input"
-              />
-              <span class="char-count">{{ postContent.length }}/500</span>
-            </div>
-          </div>
-          
-          <!-- 图片预览 -->
-          <div v-if="selectedImages.length > 0" class="image-preview-list">
-            <div v-for="(img, idx) in selectedImages" :key="idx" class="preview-item">
-              <img :src="img" alt="preview">
-              <a-button danger shape="circle" size="small" class="remove-btn" @click="removeImage(idx)">
-                <i class="fas fa-times"></i>
-              </a-button>
-            </div>
-          </div>
+    <div class="page-header-section">
+      <div class="header-content">
+        <div class="header-text">
+          <h1 class="page-title">
+            <i class="fas fa-lightbulb"></i>
+            <span>说说广场</span>
+          </h1>
+          <p class="page-subtitle">分享你的新鲜事，与大家一起交流</p>
+        </div>
+      </div>
+    </div>
 
-          <!-- 操作栏 -->
-          <div class="create-post-actions">
-            <div class="left-actions">
-              <a-upload
-                :customRequest="() => {}"
-                :showUploadList="false"
-                accept="image/*"
-                multiple
-                @change="handleImageSelect"
-              >
-                <a-button type="text">
-                  <i class="fas fa-image text-green-500"></i>
-                  <span class="ml-1">图片</span>
-                </a-button>
-              </a-upload>
-              <a-switch v-model:checked="isPublic" size="small">
-                <template #checkedChildren>公开</template>
-                <template #unCheckedChildren>私密</template>
-              </a-switch>
-            </div>
-            <a-button type="primary" :loading="loading" :disabled="!postContent.trim()" @click="createPost">
-              <template #icon><i class="fas fa-paper-plane"></i></template>
-              发布
+    <div class="posts-container">
+      <div class="create-post-card">
+        <div class="create-post-header">
+          <div class="user-avatar">
+            {{ getInitials(userStore.user?.fullName || userStore.user?.username || '我') }}
+          </div>
+          <div class="input-wrapper">
+            <a-textarea
+              v-model:value="postContent"
+              :rows="3"
+              placeholder="分享你的新鲜事..."
+              :maxlength="500"
+              class="post-input"
+            />
+            <span class="char-count">{{ postContent.length }}/500</span>
+          </div>
+        </div>
+        
+        <div v-if="selectedImages.length > 0" class="image-preview-list">
+          <div v-for="(img, idx) in selectedImages" :key="idx" class="preview-item">
+            <img :src="img" alt="preview">
+            <a-button danger shape="circle" size="small" class="remove-btn" @click="removeImage(idx)">
+              <i class="fas fa-times"></i>
             </a-button>
           </div>
         </div>
 
-        <!-- 说说列表 -->
-        <div class="posts-list masonry-layout">
-          <a-spin :spinning="loading">
-            <a-empty v-if="!loading && posts.length === 0" description="暂无说说" />
-            <template v-else>
-              <div v-for="post in posts" :key="post.id" class="post-item masonry-item">
-                <!-- 头部 -->
-                <div class="post-header">
-                  <a-avatar :size="44" class="post-avatar">
-                    {{ getInitials(post.author?.fullName || post.author?.username || post.userName) }}
-                  </a-avatar>
-                  <div class="post-info">
-                    <div class="post-author">{{ post.author?.fullName || post.author?.username || post.userName || '匿名用户' }}</div>
-                    <div class="post-meta">
-                      <span>{{ formatTime(post.createdAt) }}</span>
-                      <a-tag v-if="!post.isPublic" size="small" class="privacy-tag">
-                        <i class="fas fa-lock"></i> 私密
-                      </a-tag>
-                    </div>
+        <div class="create-post-actions">
+          <div class="left-actions">
+            <a-upload
+              :customRequest="() => {}"
+              :showUploadList="false"
+              accept="image/*"
+              multiple
+              @change="handleImageSelect"
+            >
+              <a-button type="text" class="action-btn">
+                <i class="fas fa-image"></i>
+                <span>图片</span>
+              </a-button>
+            </a-upload>
+            <a-switch v-model:checked="isPublic" size="small">
+              <template #checkedChildren>公开</template>
+              <template #unCheckedChildren>私密</template>
+            </a-switch>
+          </div>
+          <a-button type="primary" class="publish-btn" :loading="loading" :disabled="!postContent.trim()" @click="createPost">
+            <i class="fas fa-paper-plane"></i>
+            发布
+          </a-button>
+        </div>
+      </div>
+
+      <div class="posts-list masonry-layout">
+        <a-spin :spinning="loading">
+          <a-empty v-if="!loading && posts.length === 0" description="暂无说说" />
+          <template v-else>
+            <div v-for="post in posts" :key="post.id" class="post-item masonry-item">
+              <div class="post-header">
+                <div class="post-avatar">
+                  {{ getInitials(post.author?.fullName || post.author?.username || post.userName) }}
+                </div>
+                <div class="post-info">
+                  <div class="post-author">{{ post.author?.fullName || post.author?.username || post.userName || '匿名用户' }}</div>
+                  <div class="post-meta">
+                    <span>{{ formatTime(post.createdAt) }}</span>
+                    <a-tag v-if="!post.isPublic" size="small" class="privacy-tag">
+                      <i class="fas fa-lock"></i> 私密
+                    </a-tag>
                   </div>
                 </div>
+              </div>
 
-                <!-- 内容 -->
-                <div class="post-body">
-                  <p class="post-text">{{ post.content }}</p>
-                  <div v-if="post.images?.length" class="post-images" :class="`layout-${Math.min(post.images.length, 4)}`">
-                    <div v-for="(img, idx) in post.images" :key="idx" class="image-wrapper">
-                      <img :src="img" alt="post image" @error="($event.target as HTMLImageElement).src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🖼️</text></svg>'">
-                    </div>
+              <div class="post-body">
+                <p class="post-text">{{ post.content }}</p>
+                <div v-if="post.images?.length" class="post-images" :class="`layout-${Math.min(post.images.length, 4)}`">
+                  <div v-for="(img, idx) in post.images" :key="idx" class="image-wrapper">
+                    <img :src="img" alt="post image" @error="($event.target as HTMLImageElement).src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🖼️</text></svg>'">
                   </div>
                 </div>
+              </div>
 
-                <!-- 操作 -->
-                <div class="post-footer">
-                  <a-button type="text" class="action-btn" :class="{ active: post.isLiked }" @click="toggleLike(post)">
-                    <template #icon>
-                      <i :class="post.isLiked ? 'fas fa-heart text-red-500' : 'far fa-heart'"></i>
+              <div class="post-footer">
+                <a-button type="text" class="action-btn" :class="{ active: post.isLiked }" @click="toggleLike(post)">
+                  <i :class="post.isLiked ? 'fas fa-heart' : 'far fa-heart'"></i>
+                  {{ post.likes > 0 ? post.likes : '赞' }}
+                </a-button>
+                <a-button type="text" class="action-btn" @click="toggleComments(post)">
+                  <i class="fas fa-comment"></i>
+                  {{ post.comments > 0 ? post.comments + '条评论' : '评论' }}
+                </a-button>
+                <a-button type="text" class="action-btn">
+                  <i class="fas fa-share"></i>
+                  分享
+                </a-button>
+              </div>
+
+              <div v-if="post.showComments" class="comments-section">
+                <div class="comment-input">
+                  <a-input
+                    v-model:value="post.commentText"
+                    placeholder="写下你的评论..."
+                    @pressEnter="submitComment(post)"
+                  >
+                    <template #suffix>
+                      <a-button type="primary" size="small" @click="submitComment(post)">发送</a-button>
                     </template>
-                    {{ post.likes > 0 ? post.likes : '赞' }}
-                  </a-button>
-                  <a-button type="text" class="action-btn" @click="toggleComments(post)">
-                    <template #icon><i class="fas fa-comment"></i></template>
-                    {{ post.comments > 0 ? post.comments + '条评论' : '评论' }}
-                  </a-button>
-                  <a-button type="text" class="action-btn">
-                    <template #icon><i class="fas fa-share"></i></template>
-                    分享
-                  </a-button>
+                  </a-input>
                 </div>
-
-                <!-- 评论区 -->
-                <div v-if="post.showComments" class="comments-section">
-                  <div class="comment-input">
-                    <a-input
-                      v-model:value="post.commentText"
-                      placeholder="写下你的评论..."
-                      @pressEnter="submitComment(post)"
-                    >
-                      <template #suffix>
-                        <a-button type="primary" size="small" @click="submitComment(post)">发送</a-button>
-                      </template>
-                    </a-input>
-                  </div>
-                  <div v-if="post.commentsList?.length" class="comments-list">
-                    <div v-for="c in post.commentsList" :key="c.id" class="comment">
-                      <a-avatar :size="32">{{ getInitials(c.author?.fullName || c.author?.username || c.userName) }}</a-avatar>
-                      <div class="comment-box">
-                        <div class="comment-author">{{ c.author?.fullName || c.author?.username || c.userName || '匿名' }}</div>
-                        <div class="comment-text">{{ c.content }}</div>
-                      </div>
+                <div v-if="post.commentsList?.length" class="comments-list">
+                  <div v-for="c in post.commentsList" :key="c.id" class="comment">
+                    <div class="comment-avatar">{{ getInitials(c.author?.fullName || c.author?.username || c.userName) }}</div>
+                    <div class="comment-box">
+                      <div class="comment-author">{{ c.author?.fullName || c.author?.username || c.userName || '匿名' }}</div>
+                      <div class="comment-text">{{ c.content }}</div>
                     </div>
                   </div>
                 </div>
               </div>
-            </template>
-          </a-spin>
-        </div>
+            </div>
+          </template>
+        </a-spin>
+      </div>
 
-        <!-- 加载更多 -->
-        <div v-if="hasMore && posts.length > 0" class="load-more">
-          <a-button type="link" :loading="loading" @click="loadMore">加载更多</a-button>
-        </div>
+      <div v-if="hasMore && posts.length > 0" class="load-more">
+        <a-button type="link" :loading="loading" @click="loadMore">加载更多</a-button>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -296,46 +297,75 @@ onMounted(() => loadPosts())
 
 <style scoped>
 .posts-page {
-  padding: 24px;
-  background: #f5f7fa;
-  min-height: calc(100vh - 64px);
+  width: 100%;
+  min-height: 100%;
+}
+
+.page-header-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 24px 32px;
+  color: white;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-title i {
+  font-size: 20px;
+}
+
+.page-subtitle {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 14px;
 }
 
 .posts-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2937;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-/* 发布卡片 */
 .create-post-card {
   background: white;
   border-radius: 16px;
   padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .create-post-header {
@@ -345,9 +375,16 @@ onMounted(() => loadPosts())
 }
 
 .user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
   flex-shrink: 0;
 }
 
@@ -360,6 +397,12 @@ onMounted(() => loadPosts())
   border-radius: 12px;
   padding: 12px 16px;
   resize: none;
+  border: 1px solid #e5e7eb;
+}
+
+.post-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 .char-count {
@@ -370,7 +413,6 @@ onMounted(() => loadPosts())
   color: #9ca3af;
 }
 
-/* 图片预览 */
 .image-preview-list {
   display: flex;
   gap: 8px;
@@ -382,7 +424,7 @@ onMounted(() => loadPosts())
   position: relative;
   width: 80px;
   height: 80px;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -404,7 +446,6 @@ onMounted(() => loadPosts())
   opacity: 1;
 }
 
-/* 操作栏 */
 .create-post-actions {
   display: flex;
   justify-content: space-between;
@@ -418,55 +459,78 @@ onMounted(() => loadPosts())
   gap: 16px;
 }
 
-/* 真正的瀑布流布局 - 使用 column-count */
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+}
+
+.action-btn i {
+  font-size: 14px;
+}
+
+.action-btn:hover {
+  color: #667eea;
+}
+
+.publish-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.publish-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
 .posts-list.masonry-layout {
   column-count: 5;
-  column-gap: 20px;
+  column-gap: 12px;
 }
 
 .masonry-item {
   background: white;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   break-inside: avoid;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   width: 100%;
   display: inline-block;
+  transition: all 0.3s ease;
 }
 
-/* 响应式列数调整 */
+.masonry-item:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
 @media (max-width: 2400px) {
-  .posts-list.masonry-layout {
-    column-count: 5;
-  }
+  .posts-list.masonry-layout { column-count: 5; }
 }
 
 @media (max-width: 2000px) {
-  .posts-list.masonry-layout {
-    column-count: 4;
-  }
+  .posts-list.masonry-layout { column-count: 4; }
 }
 
 @media (max-width: 1600px) {
-  .posts-list.masonry-layout {
-    column-count: 3;
-  }
+  .posts-list.masonry-layout { column-count: 3; }
 }
 
 @media (max-width: 1200px) {
-  .posts-list.masonry-layout {
-    column-count: 2;
-  }
+  .posts-list.masonry-layout { column-count: 2; }
 }
 
 @media (max-width: 700px) {
-  .posts-list.masonry-layout {
-    column-count: 1;
-  }
+  .posts-list.masonry-layout { column-count: 1; }
 }
 
-/* 帖子头部 */
 .post-header {
   display: flex;
   align-items: center;
@@ -475,9 +539,16 @@ onMounted(() => loadPosts())
 }
 
 .post-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -505,9 +576,11 @@ onMounted(() => loadPosts())
   height: 18px;
   line-height: 16px;
   padding: 0 6px;
+  background: rgba(102, 126, 234, 0.1);
+  border: none;
+  color: #667eea;
 }
 
-/* 帖子内容 */
 .post-body {
   margin-bottom: 16px;
 }
@@ -528,27 +601,16 @@ onMounted(() => loadPosts())
   overflow: hidden;
 }
 
-.post-images.layout-1 {
-  grid-template-columns: 1fr;
-}
-
-.post-images.layout-1 img {
-  max-height: 400px;
-}
-
+.post-images.layout-1 { grid-template-columns: 1fr; }
+.post-images.layout-1 img { max-height: 400px; }
 .post-images.layout-2,
-.post-images.layout-4 {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.post-images.layout-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
+.post-images.layout-4 { grid-template-columns: repeat(2, 1fr); }
+.post-images.layout-3 { grid-template-columns: repeat(3, 1fr); }
 
 .post-images .image-wrapper {
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #f3f4f6;
 }
 
@@ -565,7 +627,6 @@ onMounted(() => loadPosts())
   transform: scale(1.05);
 }
 
-/* 帖子底部 */
 .post-footer {
   display: flex;
   gap: 8px;
@@ -576,6 +637,8 @@ onMounted(() => loadPosts())
 .post-footer .action-btn {
   flex: 1;
   color: #6b7280;
+  border-radius: 12px;
+  padding: 8px;
 }
 
 .post-footer .action-btn:hover {
@@ -587,7 +650,10 @@ onMounted(() => loadPosts())
   color: #ef4444;
 }
 
-/* 评论区 */
+.post-footer .action-btn.active i {
+  color: #ef4444;
+}
+
 .comments-section {
   margin-top: 16px;
   padding-top: 16px;
@@ -607,6 +673,20 @@ onMounted(() => loadPosts())
 .comment {
   display: flex;
   gap: 12px;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .comment-box {
@@ -629,17 +709,12 @@ onMounted(() => loadPosts())
   margin: 0;
 }
 
-/* 加载更多 */
 .load-more {
   text-align: center;
   padding: 20px 0;
 }
 
 @media (max-width: 768px) {
-  .posts-page {
-    padding: 16px;
-  }
-  
   .create-post-header {
     gap: 12px;
   }
